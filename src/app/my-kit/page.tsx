@@ -60,7 +60,7 @@ export default function MyKitPage() {
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-stone-800 mb-1">My Kit</h1>
           <p className="text-stone-500 text-sm">
-            Koleksi ayat dan bookmark personalmu
+            Your collection
           </p>
         </div>
 
@@ -139,13 +139,13 @@ export default function MyKitPage() {
                               onClick={() => handleSaveReflection(item.ayat.id)}
                               className="text-xs bg-emerald-600 text-white px-3 py-1.5 rounded-lg hover:bg-emerald-700"
                             >
-                              Simpan
+                              Save
                             </button>
                             <button
                               onClick={() => setEditingReflection(null)}
                               className="text-xs bg-stone-100 text-stone-600 px-3 py-1.5 rounded-lg hover:bg-stone-200"
                             >
-                              Batal
+                              Cancel
                             </button>
                           </div>
                         </div>
@@ -163,7 +163,7 @@ export default function MyKitPage() {
                             </p>
                           ) : (
                             <p className="text-xs text-stone-400 hover:text-emerald-500 transition-colors">
-                              ✏️ Tambah refleksi pribadi...
+                              ✏️ Add personal reflection...
                             </p>
                           )}
                         </div>
@@ -190,12 +190,12 @@ export default function MyKitPage() {
             {bookmarks.length === 0 ? (
               <div className="text-center py-20 text-stone-400">
                 <p className="text-4xl mb-3">🔖</p>
-                <p className="text-sm mb-4">Belum ada ayat yang di-bookmark</p>
+                <p className="text-sm mb-4">Nothing Found</p>
                 <Link
                   href="/"
                   className="text-emerald-600 text-sm font-medium hover:text-emerald-700"
                 >
-                  Temukan ayatmu →
+                  Search your ayat →
                 </Link>
               </div>
             ) : (

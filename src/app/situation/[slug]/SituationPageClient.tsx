@@ -66,7 +66,7 @@ export default function SituationPageClient({
         className="inline-flex items-center gap-2 text-stone-400 hover:text-stone-600 text-sm mb-6 transition-colors"
       >
         <span>←</span>
-        <span>Kembali</span>
+        <span>back</span>
       </Link>
 
       {/* Header */}
@@ -91,7 +91,7 @@ export default function SituationPageClient({
             href="/my-kit"
             className="text-purple-600 text-xs font-medium hover:text-purple-800"
           >
-            Lihat Kit →
+            see kit →
           </Link>
         </div>
       )}
@@ -100,7 +100,7 @@ export default function SituationPageClient({
       {ayats.length === 0 ? (
         <div className="text-center py-20 text-stone-400">
           <p className="text-4xl mb-3">🔍</p>
-          <p className="text-sm">Tidak ada ayat ditemukan</p>
+          <p className="text-sm">Nothing Found</p>
         </div>
       ) : (
         <div className="flex flex-col gap-4">
@@ -124,7 +124,7 @@ export default function SituationPageClient({
       )}
       {showKitToast && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-purple-600 text-white text-sm px-4 py-2 rounded-full shadow-lg z-50">
-          📦 Ditambahkan ke Kit!
+          📦 Add to Kit!
         </div>
       )}
     </div>
