@@ -12,6 +12,15 @@ interface Props {
   params: { slug: string }; // ✅ FIXED (no Promise)
 }
 
+// app/situation/[slug]/page.tsx
+import { situations } from "@/lib/situations";
+
+export async function generateStaticParams() {
+  return situations.map((s) => ({
+    slug: s.slug,
+  }));
+}
+
 export default async function SituationPage({ params }: Props) {
   const { slug } = params; // ✅ FIXED (no await)
 
