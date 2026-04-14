@@ -113,7 +113,7 @@ export const situations: Situation[] = [
     id: "12",
     slug: "feeling-distant-from-allah",
     title: "Feeling Distant from Allah",
-    description: "Faith feels weak, عبادah feels empty",
+    description: "Faith feels weak, worship feels empty",
     emoji: "🌙",
     category: "Spiritual",
     searchQuery: "repentance return to Allah closeness dhikr heart",
@@ -167,8 +167,28 @@ export const categories = [
   "Financial",
 ];
 
+
+// 🔥 ADD THIS (IMPORTANT FIX)
+const slugMap: Record<string, string> = {
+  "takut-gagal": "fear-of-failure",
+  "stress-berat": "heavy-stress",
+  "disakiti-orang": "hurt-by-others",
+  "konflik-keluarga": "family-conflict",
+  "gagal-ujian": "failed-exam",
+  "mau-resign": "thinking-of-resigning",
+  "susah-dapat-kerja": "struggling-to-find-job",
+  "orang-tua-sakit": "sick-parents",
+  "kehilangan-orang-tercinta": "losing-loved-one",
+  "merasa-jauh-dari-allah": "feeling-distant-from-allah",
+  "mau-tobat": "want-to-repent",
+  "bersyukur": "feeling-grateful",
+  "masalah-finansial": "financial-problems",
+  "mau-mulai-bisnis": "starting-a-business",
+};
+
 export const getSituationBySlug = (slug: string): Situation | undefined => {
-  return situations.find((s) => s.slug === slug);
+  const normalizedSlug = slugMap[slug] || slug;
+  return situations.find((s) => s.slug === normalizedSlug);
 };
 
 export const getSituationsByCategory = (category: string): Situation[] => {
