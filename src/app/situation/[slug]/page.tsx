@@ -17,7 +17,7 @@ export default async function SituationPage({ params }: Props) {
 
   if (!situation) notFound();
 
-  let ayats = [];
+  let ayats: any[] = [];
   let hasError = false;
 
   try {
