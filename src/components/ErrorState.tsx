@@ -12,14 +12,14 @@ export default function ErrorState({
       <p className="text-5xl mb-4">😔</p>
       <p className="text-stone-600 font-medium mb-2">{message}</p>
       <p className="text-stone-400 text-sm mb-6">
-        Coba refresh halaman atau kembali ke beranda
+        Refresh
       </p>
       <Link
         href="/"
         className="inline-flex items-center gap-2 bg-emerald-600 text-white text-sm font-medium px-4 py-2 rounded-xl hover:bg-emerald-700 transition-colors"
       >
         <span>←</span>
-        <span>Kembali ke Beranda</span>
+        <span>Back to Home</span>
       </Link>
     </div>
   );
