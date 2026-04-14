@@ -6,18 +6,20 @@ import SituationPageClient from "./SituationPageClient";
 import ErrorState from "@/components/ErrorState";
 import { Suspense } from "react";
 import LoadingSkeleton from "@/components/LoadingSkeleton";
+import { Ayat } from "@/types";
 
 interface Props {
-  params: Promise<{ slug: string }>;
+  params: { slug: string }; // ✅ FIXED (no Promise)
 }
 
 export default async function SituationPage({ params }: Props) {
-  const { slug } = await params;
+  const { slug } = params; // ✅ FIXED (no await)
+
   const situation = getSituationBySlug(slug);
 
   if (!situation) notFound();
 
-  let ayats: any[] = [];
+  let ayats: Ayat[] = []; // ✅ FIXED typing
   let hasError = false;
 
   try {
@@ -29,11 +31,15 @@ export default async function SituationPage({ params }: Props) {
   return (
     <div className="min-h-screen bg-stone-50">
       <Navbar />
+
       <Suspense fallback={<LoadingSkeleton />}>
         {hasError ? (
-          <ErrorState message="Gagal memuat ayat. Periksa koneksi internetmu." />
+          <ErrorState message="Failed to load verses. Please check your internet connection." />
         ) : (
-          <SituationPageClient situation={situation} initialAyats={ayats} />
+          <SituationPageClient
+            situation={situation}
+            initialAyats={ayats}
+          />
         )}
       </Suspense>
     </div>
