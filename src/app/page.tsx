@@ -15,22 +15,23 @@ import {
 } from "@/lib/storage";
 import { Ayat } from "@/types";
 
+// ✅ FIXED: keys now match the English category strings in situations.ts
 const categoryEmojis: Record<string, string> = {
-  "Tekanan & Kecemasan": "😰",
-  Hubungan: "💔",
-  "Karir & Studi": "📉",
-  "Kesehatan & Kehilangan": "🏥",
-  Spiritual: "🙏",
-  Finansial: "💰",
+  "Pressure & Anxiety": "😰",
+  "Relationships": "💔",
+  "Career & Study": "📉",
+  "Health & Loss": "🏥",
+  "Spiritual": "🙏",
+  "Financial": "💰",
 };
 
 const categoryLabels: Record<string, string> = {
-  "Tekanan & Kecemasan": "Anxiety & Pressure",
-  Hubungan: "Relationships",
-  "Karir & Studi": "Career & Studies",
-  "Kesehatan & Kehilangan": "Health & Loss",
-  Spiritual: "Spiritual",
-  Finansial: "Financial",
+  "Pressure & Anxiety": "Anxiety & Pressure",
+  "Relationships": "Relationships",
+  "Career & Study": "Career & Studies",
+  "Health & Loss": "Health & Loss",
+  "Spiritual": "Spiritual",
+  "Financial": "Financial",
 };
 
 type SearchState = "idle" | "searching" | "done" | "error";
