@@ -238,28 +238,6 @@ export default function Home() {
         <div className="flex-1 h-px bg-stone-200" />
       </div>
 
-      {/* Categories */}
-      <section className="max-w-4xl mx-auto px-4 pb-20">
-        {categories.map((category) => {
-          const categorySituations = getSituationsByCategory(category);
-          return (
-            <div key={category} className="mb-10">
-              <div className="flex items-center gap-2 mb-4">
-                <span className="text-lg">{categoryEmojis[category]}</span>
-                <h2 className="text-sm font-semibold text-stone-500 uppercase tracking-wider">
-                  {categoryLabels[category] ?? category}
-                </h2>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {categorySituations.map((situation) => (
-                  <SituationCard key={situation.id} situation={situation} />
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </section>
-
       {/* Footer */}
       <footer className="text-center py-8 text-stone-400 text-xs border-t border-stone-100 bg-white">
         <p className="mb-1">FindMyAyat</p>
