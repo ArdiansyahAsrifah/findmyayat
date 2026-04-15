@@ -1,4 +1,4 @@
-import { getSituationBySlug } from "@/lib/situations";
+import { getSituationBySlug, situations } from "@/lib/situations";
 import { getAyatsBySituation } from "@/lib/quranapi";
 import { notFound } from "next/navigation";
 import Navbar from "@/components/Navbar";
@@ -9,26 +9,19 @@ import LoadingSkeleton from "@/components/LoadingSkeleton";
 import { Ayat } from "@/types";
 
 interface Props {
-  params: { slug: string }; // ✅ FIXED (no Promise)
+  params: { slug: string };
 }
 
-// app/situation/[slug]/page.tsx
-import { situations } from "@/lib/situations";
-
 export async function generateStaticParams() {
-  return situations.map((s) => ({
-    slug: s.slug,
-  }));
+  return situations.map((s) => ({ slug: s.slug }));
 }
 
 export default async function SituationPage({ params }: Props) {
-  const { slug } = params; // ✅ FIXED (no await)
-
+  const { slug } = params;
   const situation = getSituationBySlug(slug);
-
   if (!situation) notFound();
 
-  let ayats: Ayat[] = []; // ✅ FIXED typing
+  let ayats: Ayat[] = [];
   let hasError = false;
 
   try {
@@ -40,15 +33,11 @@ export default async function SituationPage({ params }: Props) {
   return (
     <div className="min-h-screen bg-stone-50">
       <Navbar />
-
       <Suspense fallback={<LoadingSkeleton />}>
         {hasError ? (
           <ErrorState message="Failed to load verses. Please check your internet connection." />
         ) : (
-          <SituationPageClient
-            situation={situation}
-            initialAyats={ayats}
-          />
+          <SituationPageClient situation={situation} initialAyats={ayats} />
         )}
       </Suspense>
     </div>
