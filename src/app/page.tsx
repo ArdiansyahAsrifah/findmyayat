@@ -231,12 +231,7 @@ export default function Home() {
         )}
       </section>
 
-      {/* Divider */}
-      <div className="max-w-4xl mx-auto px-4 flex items-center gap-4 pb-8">
-        <div className="flex-1 h-px bg-stone-200" />
-        <span className="text-xs text-stone-400 font-medium">or browse by situation</span>
-        <div className="flex-1 h-px bg-stone-200" />
-      </div>
+
       {/* Footer */}
       <footer className="text-center py-8 text-stone-400 text-xs border-t border-stone-100 bg-white">
         <p className="mb-1">FindMyAyat</p>
