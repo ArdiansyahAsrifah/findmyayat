@@ -9,7 +9,7 @@ import LoadingSkeleton from "@/components/LoadingSkeleton";
 import { Ayat } from "@/types";
 
 interface Props {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 export async function generateStaticParams() {
@@ -17,7 +17,7 @@ export async function generateStaticParams() {
 }
 
 export default async function SituationPage({ params }: Props) {
-  const { slug } = params;
+  const { slug } = await params;
   const situation = getSituationBySlug(slug);
   if (!situation) notFound();
 

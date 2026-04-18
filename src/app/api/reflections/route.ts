@@ -1,4 +1,3 @@
-// app/api/reflections/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getReflectToken, qfHeaders, QF_API_BASE } from "@/lib/contentToken";
 
@@ -14,6 +13,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const token = await getReflectToken();
+
     const url = `${QF_API_BASE}/quran-reflect/v1/posts?filter[ayah]=${surah}:${verse}&page[limit]=${limit}&locale=en`;
 
     const res = await fetch(url, {
@@ -24,12 +24,25 @@ export async function GET(req: NextRequest) {
     if (!res.ok) {
       const errText = await res.text();
       console.error("QuranReflect API error:", res.status, errText);
-      return NextResponse.json({ data: [], total: 0 });
+
+      // 🔥 handle scope issue
+      if (res.status === 403) {
+        return NextResponse.json({
+          data: [],
+          total: 0,
+          error: "scope_not_enabled",
+        });
+      }
+
+      return NextResponse.json({
+        data: [],
+        total: 0,
+        error: "unknown_error",
+      });
     }
 
     const json = await res.json();
 
-    // Normalize response shape
     const posts = json.data ?? json.posts ?? [];
     const total = json.meta?.total ?? json.total ?? posts.length;
 
@@ -54,6 +67,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ data, total });
   } catch (err) {
     console.error("Reflections route error:", err);
-    return NextResponse.json({ data: [], total: 0 });
+
+    return NextResponse.json({
+      data: [],
+      total: 0,
+      error: "network_error",
+    });
   }
 }

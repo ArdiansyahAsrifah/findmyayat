@@ -1,31 +1,13 @@
 "use client";
 
-/**
- * components/ReflectionsPanel.tsx
- *
- * Shows public QuranReflect community reflections for a given verse.
- * Fetched via /api/reflections (server proxy, client_credentials, no user login needed).
- *
- * Usage inside AyatCard:
- *   <ReflectionsPanel surahNumber={2} verseNumber={255} />
- */
-
 import { useState, useEffect } from "react";
 
 interface Reflection {
   id: number;
   body: string;
-  createdAt: string;
-  likesCount: number;
-  commentsCount: number;
-  postTypeName: string;
-  author: {
-    username: string;
-    firstName?: string;
-    lastName?: string;
-    verified: boolean;
-    avatar: string | null;
-  } | null;
+  user?: { name?: string; username?: string };
+  likes_count?: number;
+  created_at?: string;
 }
 
 interface Props {
@@ -33,146 +15,167 @@ interface Props {
   verseNumber: number;
 }
 
+type Status = "loading" | "success" | "scope_not_enabled" | "error" | "empty";
+
 export default function ReflectionsPanel({ surahNumber, verseNumber }: Props) {
   const [reflections, setReflections] = useState<Reflection[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [total, setTotal] = useState(0);
+  const [status, setStatus] = useState<Status>("loading");
 
   useEffect(() => {
-    setLoading(true);
-    fetch(`/api/reflections?surah=${surahNumber}&verse=${verseNumber}&limit=3`)
-      .then((r) => r.json())
-      .then((data) => {
-        setReflections(data.data ?? []);
-        setTotal(data.total ?? 0);
-      })
-      .catch(() => setReflections([]))
-      .finally(() => setLoading(false));
+    let cancelled = false;
+
+    async function load() {
+      setStatus("loading");
+      try {
+        const res = await fetch(
+          `/api/reflections?surah=${surahNumber}&verse=${verseNumber}&limit=3`
+        );
+        const data = await res.json();
+
+        if (cancelled) return;
+
+        // Handle known scope error from QuranReflect
+        if (data.error === "scope_not_enabled" || res.status === 403) {
+          setStatus("scope_not_enabled");
+          return;
+        }
+
+        if (!res.ok) {
+          setStatus("error");
+          return;
+        }
+
+        const raw: any[] = data.data ?? data.reflections ?? [];
+        const items: Reflection[] = raw.map((p) => ({
+          id: p.id,
+          body: p.body ?? p.text ?? "",
+          user: p.author
+            ? {
+                name: p.author.firstName
+                  ? `${p.author.firstName} ${p.author.lastName ?? ""}`.trim()
+                  : p.author.username,
+                username: p.author.username,
+              }
+            : undefined,
+          likes_count: p.likesCount ?? p.likes_count ?? 0,
+          created_at: p.createdAt ?? p.created_at ?? "",
+        }));
+        if (items.length === 0) {
+          setStatus("empty");
+        } else {
+          setReflections(items);
+          setStatus("success");
+        }
+      } catch {
+        if (!cancelled) setStatus("error");
+      }
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+    };
   }, [surahNumber, verseNumber]);
 
-  if (loading) {
+  // ── Loading skeleton ────────────────────────────────────
+  if (status === "loading") {
     return (
       <div className="space-y-3">
         {[1, 2].map((i) => (
           <div key={i} className="animate-pulse">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-6 h-6 rounded-full bg-stone-200" />
-              <div className="h-3 w-24 bg-stone-200 rounded" />
-            </div>
-            <div className="h-3 w-full bg-stone-100 rounded mb-1" />
-            <div className="h-3 w-3/4 bg-stone-100 rounded" />
+            <div className="h-3 rounded-full bg-violet-100 mb-2 w-3/4" />
+            <div className="h-3 rounded-full bg-violet-100 w-1/2" />
           </div>
         ))}
       </div>
     );
   }
 
-  if (reflections.length === 0) {
+  // ── Scope not enabled ───────────────────────────────────
+  if (status === "scope_not_enabled") {
     return (
-      <p className="text-xs text-stone-400 text-center py-3">
-        No community reflections yet for this verse.
+      <div
+        className="flex items-start gap-3 rounded-xl px-4 py-3"
+        style={{
+          background: "rgba(100, 70, 180, 0.06)",
+          border: "1px dashed rgba(100, 70, 180, 0.2)",
+        }}
+      >
+        <span className="text-lg mt-0.5">🔒</span>
+        <div>
+          <p
+            className="text-xs font-semibold mb-0.5"
+            style={{ color: "#6040b0" }}
+          >
+            Reflections not available
+          </p>
+          <p className="text-xs" style={{ color: "#9070c0" }}>
+            Community reflections require additional API access. Enable the
+            reflections scope in your QuranReflect app settings.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Generic error ───────────────────────────────────────
+  if (status === "error") {
+    return (
+      <p className="text-xs text-stone-400 italic">
+        Could not load reflections right now.
       </p>
     );
   }
 
-  return (
-    <div className="space-y-4">
-      {reflections.map((r) => (
-        <div key={r.id} className="group">
-          {/* Author row */}
-          <div className="flex items-center gap-2 mb-1.5">
-            {r.author?.avatar ? (
-              <img
-                src={r.author.avatar}
-                alt={r.author.username}
-                className="w-5 h-5 rounded-full object-cover"
-              />
-            ) : (
-              <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center text-[9px] text-emerald-700 font-bold">
-                {(r.author?.firstName ?? r.author?.username ?? "?")
-                  .charAt(0)
-                  .toUpperCase()}
-              </div>
-            )}
-            <span className="text-[11px] font-medium text-stone-600">
-              {r.author?.firstName
-                ? `${r.author.firstName}${r.author.lastName ? " " + r.author.lastName : ""}`
-                : r.author?.username ?? "Anonymous"}
-            </span>
-            {r.author?.verified && (
-              <svg
-                width="10"
-                height="10"
-                viewBox="0 0 10 10"
-                fill="none"
-                className="text-emerald-500 flex-shrink-0"
-              >
-                <circle cx="5" cy="5" r="5" fill="currentColor" opacity="0.15" />
-                <path
-                  d="M3 5l1.5 1.5L7 3.5"
-                  stroke="currentColor"
-                  strokeWidth="1.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            )}
-            {/* Post type badge */}
-            <span
-              className={`ml-auto text-[9px] font-semibold px-1.5 py-0.5 rounded-md ${
-                r.postTypeName === "lesson"
-                  ? "bg-amber-50 text-amber-600"
-                  : "bg-violet-50 text-violet-600"
-              }`}
-            >
-              {r.postTypeName === "lesson" ? "📖 Lesson" : "💭 Reflection"}
-            </span>
-          </div>
+  // ── Empty ───────────────────────────────────────────────
+  if (status === "empty") {
+    return (
+      <div className="text-center py-3">
+        <p className="text-2xl mb-1">🌱</p>
+        <p className="text-xs text-stone-400">
+          No reflections yet. Be the first!
+        </p>
+      </div>
+    );
+  }
 
-          {/* Body */}
-          <p className="text-xs text-stone-600 leading-relaxed line-clamp-3">
+  // ── Success ─────────────────────────────────────────────
+  return (
+    <div className="space-y-3">
+      <p
+        className="text-[11px] font-semibold uppercase tracking-widest mb-3"
+        style={{ color: "#7060a0" }}
+      >
+        Community reflections
+      </p>
+
+      {reflections.map((r) => (
+        <div
+          key={r.id}
+          className="rounded-xl px-4 py-3"
+          style={{
+            background: "rgba(255,255,255,0.7)",
+            border: "1px solid rgba(100,70,180,0.1)",
+          }}
+        >
+          <p className="text-xs leading-relaxed text-stone-600 mb-2">
             {r.body}
           </p>
-
-          {/* Engagement */}
-          <div className="flex items-center gap-3 mt-1.5">
-            <span className="text-[10px] text-stone-400 flex items-center gap-1">
-              <svg width="9" height="9" viewBox="0 0 9 9" fill="currentColor" className="opacity-60">
-                <path d="M4.5 1C2.567 1 1 2.343 1 4c0 .9.42 1.71 1.09 2.28L1.5 8l1.68-.84A4.1 4.1 0 004.5 7C6.433 7 8 5.657 8 4S6.433 1 4.5 1z"/>
-              </svg>
-              {r.commentsCount}
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] text-stone-400">
+              {r.user?.name ?? r.user?.username ?? "Anonymous"}
             </span>
-            <span className="text-[10px] text-stone-400 flex items-center gap-1">
-              <svg width="9" height="9" viewBox="0 0 9 9" fill="currentColor" className="opacity-60">
-                <path d="M4.5 1.5C2.843 1.5 1.5 2.843 1.5 4.5S2.843 7.5 4.5 7.5 7.5 6.157 7.5 4.5 6.157 1.5 4.5 1.5zm0 1l.95 1.92 2.12.31-1.535 1.495.362 2.11L4.5 7.26l-1.897.995.362-2.11L1.43 4.73l2.12-.31L4.5 2.5z"/>
-              </svg>
-              {r.likesCount}
-            </span>
-            <span className="ml-auto text-[10px] text-stone-300">
-              {new Date(r.createdAt).toLocaleDateString("id-ID", {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-              })}
-            </span>
+            {r.likes_count !== undefined && r.likes_count > 0 && (
+              <span
+                className="text-[10px] flex items-center gap-1"
+                style={{ color: "#9070c0" }}
+              >
+                ♥ {r.likes_count}
+              </span>
+            )}
           </div>
         </div>
       ))}
-
-      {/* Link to more on QuranReflect */}
-      {total > 3 && (
-        <a
-          href={`https://quranreflect.com/ayahs/${surahNumber}:${verseNumber}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-1 text-[11px] text-emerald-600 hover:text-emerald-700 font-medium transition-colors"
-        >
-          See all {total} reflections on QuranReflect
-          <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-            <path d="M2 4.5h5M5 2.5l2 2-2 2"/>
-          </svg>
-        </a>
-      )}
     </div>
   );
 }
