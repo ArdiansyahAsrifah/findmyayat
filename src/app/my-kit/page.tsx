@@ -120,7 +120,6 @@ export default function MyKitPage() {
                     <AyatCard
                       ayat={item.ayat}
                       isBookmarked={isBookmarked(item.ayat.id)}
-                      onBookmark={handleBookmark}
                     />
 
                     {/* Reflection Box */}
@@ -205,7 +204,6 @@ export default function MyKitPage() {
                     key={ayat.id}
                     ayat={ayat}
                     isBookmarked={true}
-                    onBookmark={handleBookmark}
                   />
                 ))}
               </div>
