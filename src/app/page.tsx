@@ -216,8 +216,6 @@ export default function Home() {
                 ayat={ayat}
                 isAiMatched
                 isBookmarked={bookmarkedIds.includes(ayat.id)}
-                onBookmark={handleBookmark}
-                onAddToKit={handleAddToKit}
               />
             ))}
           </div>
