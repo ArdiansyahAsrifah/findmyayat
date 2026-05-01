@@ -12,6 +12,8 @@ export interface SessionData {
     username?: string;
   };
   oauthState?: string;
+  codeVerifier?: string;
+  nonce?: string;          // ← TAMBAH INI
 }
 
 export const sessionOptions: SessionOptions = {

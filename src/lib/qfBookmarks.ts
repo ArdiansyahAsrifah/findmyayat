@@ -1,11 +1,23 @@
-const QF_API_BASE =
-  process.env.QF_ENV === "production"
-    ? "https://apis.quran.foundation"
-    : "https://apis-prelive.quran.foundation";
+// const QF_API_BASE =
+//   process.env.QF_ENV === "production"
+//     ? "https://apis.quran.foundation"
+//     : "https://apis-prelive.quran.foundation";
+
+// function userHeaders(accessToken: string) {
+//   return {
+//     Authorization: `Bearer ${accessToken}`,
+//     "Content-Type": "application/json",
+//   };
+// }
+
+import { QF_API_BASE } from "@/lib/contentToken";
+
+const CLIENT_ID = process.env.QF_CLIENT_ID ?? "";
 
 function userHeaders(accessToken: string) {
   return {
-    Authorization: `Bearer ${accessToken}`,
+    "x-auth-token": accessToken,   
+    "x-client-id": CLIENT_ID,     
     "Content-Type": "application/json",
   };
 }

@@ -1,16 +1,18 @@
 // lib/qfCollections.ts
 // Wrapper untuk QF Collection API (butuh user access token)
 
-const QF_API_BASE =
-  process.env.QF_ENV === "production"
-    ? "https://apis.quran.foundation"
-    : "https://apis-prelive.quran.foundation";
+// const QF_API_BASE =
+//   process.env.QF_ENV === "production"
+//     ? "https://apis.quran.foundation"
+//     : "https://apis-prelive.quran.foundation";
+
+import { QF_API_BASE } from "@/lib/contentToken";
 
 const CLIENT_ID = process.env.QF_CLIENT_ID ?? "";
 
 function userHeaders(accessToken: string) {
   return {
-    Authorization: `Bearer ${accessToken}`, // 🔥 WAJIB
+    "x-auth-token": accessToken,  
     "Content-Type": "application/json",
   };
 }
