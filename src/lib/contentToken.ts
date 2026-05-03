@@ -92,4 +92,4 @@ export function qfHeaders(token: string) {
 export const QF_API_BASE =
   process.env.QF_ENV === "production"
     ? "https://apis.quran.foundation"
-    : "https://apis-prelive.quran.foundation";
+    : "https://apis-prelive.quran.foundation"; // ✅ Prelive base URL
