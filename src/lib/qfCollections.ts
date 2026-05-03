@@ -1,8 +1,6 @@
 import { QF_API_BASE } from "@/lib/contentToken";
 
 const CLIENT_ID = process.env.QF_CLIENT_ID ?? "";
-
-// Default mushaf: 1 = QCFV2 (standard Quran.com)
 const DEFAULT_MUSHAF = 1;
 
 function userHeaders(accessToken: string) {
@@ -13,40 +11,9 @@ function userHeaders(accessToken: string) {
   };
 }
 
-export async function getQFCollections(accessToken: string) {
-  // ✅ pagination wajib
-  const url = `${QF_API_BASE}/auth/v1/collections?first=20`;
-  const res = await fetch(url, {
-    headers: userHeaders(accessToken),
-    cache: "no-store",
-  });
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Get collections failed: ${res.status} ${err}`);
-  }
-  return res.json();
-}
-
-export async function createQFCollection(accessToken: string, name: string) {
-  const url = `${QF_API_BASE}/auth/v1/collections`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: userHeaders(accessToken),
-    body: JSON.stringify({ name }),
-  });
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Create collection failed: ${res.status} ${err}`);
-  }
-  return res.json();
-}
-
-export async function getQFCollectionItems(
-  accessToken: string,
-  collectionId: string
-) {
-  // ✅ endpoint yang benar: /bookmarks bukan /verses
-  const url = `${QF_API_BASE}/auth/v1/collections/${collectionId}/bookmarks?first=50`;
+// ✅ Pakai __default__ — tidak perlu buat collection, tidak butuh scope create
+export async function getQFCollectionItems(accessToken: string) {
+  const url = `${QF_API_BASE}/auth/v1/collections/__default__?first=50`;
   console.log("[getQFCollectionItems] fetching:", url);
   const res = await fetch(url, {
     headers: userHeaders(accessToken),
@@ -57,17 +24,16 @@ export async function getQFCollectionItems(
     throw new Error(`Get collection items failed: ${res.status} ${err}`);
   }
   return res.json();
+  // response: { success, data: { collection, bookmarks: [...] }, pagination }
 }
 
 export async function addQFCollectionItem(
   accessToken: string,
-  collectionId: string,
   surahNumber: number,
   verseNumber: number
 ) {
-  // ✅ endpoint yang benar: /bookmarks bukan /verses
-  const url = `${QF_API_BASE}/auth/v1/collections/${collectionId}/bookmarks`;
-  // ✅ mushaf wajib di pre-live
+  // ✅ POST ke __default__ collection
+  const url = `${QF_API_BASE}/auth/v1/collections/__default__/bookmarks`;
   const body = {
     type: "ayah",
     key: surahNumber,
@@ -88,10 +54,9 @@ export async function addQFCollectionItem(
 
 export async function deleteQFCollectionItem(
   accessToken: string,
-  collectionId: string,
   bookmarkId: string
 ) {
-  const url = `${QF_API_BASE}/auth/v1/collections/${collectionId}/bookmarks/${bookmarkId}`;
+  const url = `${QF_API_BASE}/auth/v1/collections/__default__/bookmarks/${bookmarkId}`;
   const res = await fetch(url, {
     method: "DELETE",
     headers: userHeaders(accessToken),
@@ -100,17 +65,4 @@ export async function deleteQFCollectionItem(
     const err = await res.text();
     throw new Error(`Delete collection item failed: ${res.status} ${err}`);
   }
-}
-
-export async function getOrCreateMyKitCollection(
-  accessToken: string
-): Promise<string> {
-  const data = await getQFCollections(accessToken);
-  const collections: Array<{ id: string; name: string }> = data.data ?? [];
-  const existing = collections.find((c) => c.name === "My Kit");
-  if (existing) return existing.id;
-
-  const created = await createQFCollection(accessToken, "My Kit");
-  // ✅ pre-live response: { success, data: { id, name, updatedAt } }
-  return created.data?.id ?? created.id;
 }

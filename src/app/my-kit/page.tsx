@@ -8,14 +8,26 @@ import { Ayat } from "@/types";
 
 type Tab = "kit" | "bookmarks";
 
-interface BookmarkItem {
-  id: number;
-  verse_key: string;
+// ✅ Sesuai response dari QF API pre-live
+interface CollectionItem {
+  id: string;
+  key: number;
+  verseNumber: number | null;
+  type: string;
+  group: string;
+  isInDefaultCollection: boolean;
+  isReading: boolean | null;
   ayat?: Ayat;
 }
 
-interface CollectionItem {
-  verse_key: string;
+interface BookmarkItem {
+  id: string;
+  key: number;
+  verseNumber: number | null;
+  type: string;
+  group: string;
+  isInDefaultCollection: boolean;
+  isReading: boolean | null;
   ayat?: Ayat;
 }
 
@@ -43,7 +55,8 @@ export default function MyKitPage() {
       }
       if (!res.ok) throw new Error("Failed to fetch kit");
       const data = await res.json();
-      setKit(data.items?.data ?? data.items ?? []);
+      // ✅ route mengembalikan { items: bookmarks[] }
+      setKit(data.items ?? []);
     } catch {
       setError("Failed to load kit");
     } finally {
@@ -52,7 +65,7 @@ export default function MyKitPage() {
   }
 
   async function fetchBookmarks() {
-    setLoadingBookmarks(false);
+    setLoadingBookmarks(true);
     setError(null);
     try {
       const res = await fetch("/api/bookmarks");
@@ -62,7 +75,8 @@ export default function MyKitPage() {
       }
       if (!res.ok) throw new Error("Failed to fetch bookmarks");
       const data = await res.json();
-      setBookmarks(data.bookmarks ?? data.data ?? data ?? []);
+      // ✅ QF API mengembalikan { success, data: [...] }
+      setBookmarks(data.data ?? data.bookmarks ?? []);
     } catch {
       setError("Failed to load bookmarks");
     } finally {
@@ -70,20 +84,22 @@ export default function MyKitPage() {
     }
   }
 
-  async function handleRemoveFromKit(verseKey: string) {
+  // ✅ pakai bookmarkId (string) bukan verseKey
+  async function handleRemoveFromKit(bookmarkId: string) {
     try {
       await fetch("/api/collections", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ verseKey }),
+        body: JSON.stringify({ bookmarkId }),
       });
-      setKit((prev) => prev.filter((item) => item.verse_key !== verseKey));
+      setKit((prev) => prev.filter((item) => item.id !== bookmarkId));
     } catch {
       setError("Failed to remove from kit");
     }
   }
 
-  async function handleRemoveBookmark(bookmarkId: number) {
+  // ✅ bookmarkId sekarang string
+  async function handleRemoveBookmark(bookmarkId: string) {
     try {
       await fetch("/api/bookmarks", {
         method: "DELETE",
@@ -94,6 +110,17 @@ export default function MyKitPage() {
     } catch {
       setError("Failed to remove bookmark");
     }
+  }
+
+  // ✅ helper: bentuk verse_key dari key + verseNumber
+  function getVerseLabel(item: CollectionItem | BookmarkItem): string {
+    if (item.type === "ayah" && item.verseNumber != null) {
+      return `Surah ${item.key}, Ayat ${item.verseNumber}`;
+    }
+    if (item.type === "surah") return `Surah ${item.key}`;
+    if (item.type === "juz") return `Juz ${item.key}`;
+    if (item.type === "page") return `Page ${item.key}`;
+    return `${item.key}`;
   }
 
   return (
@@ -144,7 +171,10 @@ export default function MyKitPage() {
             {loadingKit ? (
               <div className="space-y-4">
                 {[1, 2].map((i) => (
-                  <div key={i} className="animate-pulse h-40 rounded-2xl bg-stone-100" />
+                  <div
+                    key={i}
+                    className="animate-pulse h-40 rounded-2xl bg-stone-100"
+                  />
                 ))}
               </div>
             ) : kit.length === 0 ? (
@@ -160,33 +190,30 @@ export default function MyKitPage() {
               </div>
             ) : (
               <div className="flex flex-col gap-6">
-                {kit.map((item) => {
-                  const [surah, verse] = item.verse_key.split(":");
-                  return (
-                    <div key={item.verse_key}>
-                      {item.ayat ? (
-                        <AyatCard ayat={item.ayat} />
-                      ) : (
-                        // Fallback jika ayat detail belum di-fetch
-                        <div
-                          className="rounded-2xl px-5 py-4 text-sm text-stone-600"
-                          style={{
-                            background: "linear-gradient(135deg, #faf9f7, #f5f2ec)",
-                            border: "1px solid rgba(180,160,120,0.2)",
-                          }}
-                        >
-                          📖 Surah {surah}, Verse {verse}
-                        </div>
-                      )}
-                      <button
-                        onClick={() => handleRemoveFromKit(item.verse_key)}
-                        className="mt-1 text-xs text-stone-300 hover:text-red-400 transition-colors"
+                {kit.map((item) => (
+                  <div key={item.id}>
+                    {item.ayat ? (
+                      <AyatCard ayat={item.ayat} />
+                    ) : (
+                      <div
+                        className="rounded-2xl px-5 py-4 text-sm text-stone-600"
+                        style={{
+                          background:
+                            "linear-gradient(135deg, #faf9f7, #f5f2ec)",
+                          border: "1px solid rgba(180,160,120,0.2)",
+                        }}
                       >
-                        Hapus dari Kit
-                      </button>
-                    </div>
-                  );
-                })}
+                        📖 {getVerseLabel(item)}
+                      </div>
+                    )}
+                    <button
+                      onClick={() => handleRemoveFromKit(item.id)}
+                      className="mt-1 text-xs text-stone-300 hover:text-red-400 transition-colors"
+                    >
+                      Hapus dari Kit
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -198,7 +225,10 @@ export default function MyKitPage() {
             {loadingBookmarks ? (
               <div className="space-y-4">
                 {[1, 2].map((i) => (
-                  <div key={i} className="animate-pulse h-40 rounded-2xl bg-stone-100" />
+                  <div
+                    key={i}
+                    className="animate-pulse h-40 rounded-2xl bg-stone-100"
+                  />
                 ))}
               </div>
             ) : bookmarks.length === 0 ? (
@@ -222,11 +252,12 @@ export default function MyKitPage() {
                       <div
                         className="rounded-2xl px-5 py-4 text-sm text-stone-600"
                         style={{
-                          background: "linear-gradient(135deg, #faf9f7, #f5f2ec)",
+                          background:
+                            "linear-gradient(135deg, #faf9f7, #f5f2ec)",
                           border: "1px solid rgba(180,160,120,0.2)",
                         }}
                       >
-                        📖 {bookmark.verse_key}
+                        📖 {getVerseLabel(bookmark)}
                       </div>
                     )}
                     <button
