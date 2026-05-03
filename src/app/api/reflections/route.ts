@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getReflectToken, qfHeaders, QF_API_BASE } from "@/lib/contentToken";
+import { getValidAccessToken } from "@/lib/tokenRefresh";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const surah = searchParams.get("surah");
   const verse = searchParams.get("verse");
   const limit = searchParams.get("limit") ?? "3";
+
+  const token = await getValidAccessToken();
+  if (!token) {
+    return NextResponse.json({ data: [], total: 0, error: "not_logged_in" });
+  }
 
   if (!surah || !verse) {
     return NextResponse.json({ error: "Missing surah or verse" }, { status: 400 });

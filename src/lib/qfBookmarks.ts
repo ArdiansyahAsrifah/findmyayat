@@ -11,7 +11,8 @@ function userHeaders(accessToken: string) {
 }
 
 export async function getQFBookmarks(accessToken: string) {
-  const res = await fetch(`${QF_API_BASE}/auth/v1/bookmarks`, {
+  // ✅ URL benar + pagination wajib
+  const res = await fetch(`${QF_API_BASE}/v1/bookmarks?first=20`, {
     headers: userHeaders(accessToken),
     cache: "no-store",
   });
@@ -27,11 +28,14 @@ export async function addQFBookmark(
   surahNumber: number,
   verseNumber: number
 ) {
-  const res = await fetch(`${QF_API_BASE}/auth/v1/bookmarks`, {
+  const res = await fetch(`${QF_API_BASE}/v1/bookmarks`, {
     method: "POST",
     headers: userHeaders(accessToken),
+    // ✅ Format body yang benar
     body: JSON.stringify({
-      verse_key: `${surahNumber}:${verseNumber}`,
+      type: "ayah",
+      key: surahNumber,
+      verseNumber: verseNumber,
     }),
   });
   if (!res.ok) {
@@ -43,9 +47,9 @@ export async function addQFBookmark(
 
 export async function deleteQFBookmark(
   accessToken: string,
-  bookmarkId: number
+  bookmarkId: string
 ) {
-  const res = await fetch(`${QF_API_BASE}/auth/v1/bookmarks/${bookmarkId}`, {
+  const res = await fetch(`${QF_API_BASE}/v1/bookmarks/${bookmarkId}`, {
     method: "DELETE",
     headers: userHeaders(accessToken),
   });

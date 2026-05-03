@@ -11,7 +11,8 @@ function userHeaders(accessToken: string) {
 }
 
 export async function getQFCollections(accessToken: string) {
-  const res = await fetch(`${QF_API_BASE}/auth/v1/collections`, {
+  // ✅ URL benar + pagination wajib
+  const res = await fetch(`${QF_API_BASE}/v1/collections?first=20`, {
     headers: userHeaders(accessToken),
     cache: "no-store",
   });
@@ -23,11 +24,10 @@ export async function getQFCollections(accessToken: string) {
 }
 
 export async function createQFCollection(accessToken: string, name: string) {
-  const res = await fetch(`${QF_API_BASE}/auth/v1/collections`, {
+  const res = await fetch(`${QF_API_BASE}/v1/collections`, {
     method: "POST",
     headers: userHeaders(accessToken),
     body: JSON.stringify({ name }),
-    cache: "no-store",
   });
   if (!res.ok) {
     const err = await res.text();
@@ -38,10 +38,11 @@ export async function createQFCollection(accessToken: string, name: string) {
 
 export async function getQFCollectionItems(
   accessToken: string,
-  collectionId: number
+  collectionId: string
 ) {
+  // ✅ URL benar + pagination
   const res = await fetch(
-    `${QF_API_BASE}/auth/v1/collections/${collectionId}/verses`,
+    `${QF_API_BASE}/v1/collections/${collectionId}/bookmarks?first=50`,
     {
       headers: userHeaders(accessToken),
       cache: "no-store",
@@ -56,19 +57,21 @@ export async function getQFCollectionItems(
 
 export async function addQFCollectionItem(
   accessToken: string,
-  collectionId: number,
+  collectionId: string,
   surahNumber: number,
   verseNumber: number
 ) {
   const res = await fetch(
-    `${QF_API_BASE}/auth/v1/collections/${collectionId}/verses`,
+    `${QF_API_BASE}/v1/collections/${collectionId}/bookmarks`,
     {
       method: "POST",
       headers: userHeaders(accessToken),
+      // ✅ Format body yang benar
       body: JSON.stringify({
-        verse_key: `${surahNumber}:${verseNumber}`,
+        type: "ayah",
+        key: surahNumber,
+        verseNumber: verseNumber,
       }),
-      cache: "no-store",
     }
   );
   if (!res.ok) {
@@ -80,15 +83,14 @@ export async function addQFCollectionItem(
 
 export async function deleteQFCollectionItem(
   accessToken: string,
-  collectionId: number,
-  verseKey: string
+  collectionId: string,
+  bookmarkId: string
 ) {
   const res = await fetch(
-    `${QF_API_BASE}/auth/v1/collections/${collectionId}/verses/${verseKey}`,
+    `${QF_API_BASE}/v1/collections/${collectionId}/bookmarks/${bookmarkId}`,
     {
       method: "DELETE",
       headers: userHeaders(accessToken),
-      cache: "no-store",
     }
   );
   if (!res.ok) {
@@ -99,13 +101,11 @@ export async function deleteQFCollectionItem(
 
 export async function getOrCreateMyKitCollection(
   accessToken: string
-): Promise<number> {
+): Promise<string> {
   const data = await getQFCollections(accessToken);
-  const collections = data.collections ?? data.data ?? [];
-  const existing = collections.find(
-    (c: { name: string }) => c.name === "My Kit"
-  );
+  const collections: Array<{ id: string; name: string }> = data.data ?? [];
+  const existing = collections.find((c) => c.name === "My Kit");
   if (existing) return existing.id;
   const created = await createQFCollection(accessToken, "My Kit");
-  return created.id ?? created.collection?.id;
+  return created.data?.id ?? created.id;
 }
