@@ -1,6 +1,6 @@
 // src/app/api/streak/route.ts
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getValidAccessToken } from "@/lib/tokenRefresh";
 import {
   getQFStreak,
