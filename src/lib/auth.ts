@@ -49,17 +49,19 @@ export function getAuthorizationUrl(
 }
 
 export async function exchangeCodeForTokens(code: string, codeVerifier: string) {
+  // ✅ Gunakan Basic Auth, bukan client_secret di body
+  const credentials = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString("base64");
+
   const res = await fetch(`${OAUTH_BASE}/oauth2/token`, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
+      "Authorization": `Basic ${credentials}`,
     },
     body: new URLSearchParams({
       grant_type: "authorization_code",
       code,
       redirect_uri: getRedirectUri(),
-      client_id: CLIENT_ID,
-      client_secret: CLIENT_SECRET,
       code_verifier: codeVerifier,
     }),
   });
