@@ -1,5 +1,3 @@
-// src/lib/qfGoalsStreak.ts
-
 import { QF_API_BASE } from "@/lib/contentToken";
 
 const CLIENT_ID = process.env.QF_CLIENT_ID ?? "";
@@ -19,30 +17,41 @@ export async function getQFStreak(accessToken: string) {
     headers: userHeaders(accessToken),
     cache: "no-store",
   });
-  
+
   const text = await res.text();
   console.log("[getQFStreak] response:", res.status, text);
-  
+
   if (!res.ok) throw new Error(`Get streak failed: ${res.status} ${text}`);
-  return JSON.parse(text);
+
+  const json = JSON.parse(text);
+
+  // ✅ Response shape: { data: [ { currentStreak, longestStreak, ... } ] }
+  const streakItem = json.data?.[0] ?? null;
+  return streakItem;
 }
 
 // ── ACTIVITY DAY ─────────────────────────────────────────────
 export async function recordQFActivityDay(accessToken: string) {
-  const today = new Date().toISOString().split("T")[0];
+  const today = new Date().toISOString().split("T")[0]; // "YYYY-MM-DD"
   const url = `${QF_API_BASE}/auth/v1/activity-days`;
-  
-  console.log("[recordActivityDay] posting:", { date: today });
-  
+
+  // ✅ Tambah field "type" yang required
+  const body = {
+    date: today,
+    type: "reflection", // required by API
+  };
+
+  console.log("[recordActivityDay] posting:", body);
+
   const res = await fetch(url, {
     method: "POST",
     headers: userHeaders(accessToken),
-    body: JSON.stringify({ date: today }),
+    body: JSON.stringify(body),
   });
-  
+
   const text = await res.text();
   console.log("[recordActivityDay] response:", res.status, text);
-  
+
   if (!res.ok) throw new Error(`Record activity day failed: ${res.status} ${text}`);
   return JSON.parse(text);
 }
