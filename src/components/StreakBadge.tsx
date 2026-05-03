@@ -63,10 +63,10 @@ export default function StreakBadge({ record = false, firstAyat }: StreakBadgePr
 
   function normalize(raw: any): StreakData {
     return {
-      currentStreak: raw?.currentStreak ?? raw?.current_streak ?? raw?.streak ?? 0,
-      longestStreak: raw?.longestStreak ?? raw?.longest_streak ?? raw?.best ?? 0,
+        currentStreak: raw?.days ?? raw?.currentStreak ?? raw?.current_streak ?? raw?.streak ?? 0,
+        longestStreak: raw?.longestStreak ?? raw?.longest_streak ?? raw?.best ?? raw?.days ?? 0,
     };
-  }
+}
 
   if (loading || !streak) return null;
 

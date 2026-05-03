@@ -24,10 +24,14 @@ export async function getQFStreak(accessToken: string) {
   if (!res.ok) throw new Error(`Get streak failed: ${res.status} ${text}`);
 
   const json = JSON.parse(text);
-
-  // ✅ Response shape: { data: [ { currentStreak, longestStreak, ... } ] }
-  const streakItem = json.data?.[0] ?? null;
-  return streakItem;
+  const item = json.data?.[0] ?? null;
+  
+  // ✅ Mapping ke shape yang konsisten
+  if (!item) return null;
+  return {
+    currentStreak: item.days ?? 0,
+    longestStreak: item.days ?? 0, // API ini tidak return longestStreak, pakai days saja
+  };
 }
 
 // ── ACTIVITY DAY ─────────────────────────────────────────────
