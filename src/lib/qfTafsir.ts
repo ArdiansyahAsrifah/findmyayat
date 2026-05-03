@@ -10,6 +10,8 @@ export async function getTafsirByAyah(
   const ayahKey = `${surahNumber}:${verseNumber}`;
   const url = `${QF_API_BASE}/content/api/v4/tafsirs/${IBN_KATHIR_ID}/by_ayah/${ayahKey}`;
 
+  console.log("[qfTafsir] fetching:", url); // ← cek URL di log
+
   const token = await getContentToken();
   const res = await fetch(url, {
     headers: qfHeaders(token),
