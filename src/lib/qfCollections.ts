@@ -11,7 +11,7 @@ function userHeaders(accessToken: string) {
 }
 
 export async function getQFCollections(accessToken: string) {
-  const res = await fetch(`${QF_API_BASE}/auth/v1/collections`, { // ✅ /auth/v1/
+  const res = await fetch(`${QF_API_BASE}/auth/v1/collections`, {
     headers: userHeaders(accessToken),
     cache: "no-store",
   });
@@ -23,7 +23,7 @@ export async function getQFCollections(accessToken: string) {
 }
 
 export async function createQFCollection(accessToken: string, name: string) {
-  const res = await fetch(`${QF_API_BASE}/auth/v1/collections`, { // ✅ /auth/v1/
+  const res = await fetch(`${QF_API_BASE}/auth/v1/collections`, {
     method: "POST",
     headers: userHeaders(accessToken),
     body: JSON.stringify({ name }),
@@ -36,9 +36,12 @@ export async function createQFCollection(accessToken: string, name: string) {
   return res.json();
 }
 
-export async function getQFCollectionItems(accessToken: string, collectionId: number) {
+export async function getQFCollectionItems(
+  accessToken: string,
+  collectionId: number
+) {
   const res = await fetch(
-    `${QF_API_BASE}/auth/v1/collections/${collectionId}/verses`, // ✅ /auth/v1/
+    `${QF_API_BASE}/auth/v1/collections/${collectionId}/verses`,
     {
       headers: userHeaders(accessToken),
       cache: "no-store",
@@ -58,7 +61,7 @@ export async function addQFCollectionItem(
   verseNumber: number
 ) {
   const res = await fetch(
-    `${QF_API_BASE}/auth/v1/collections/${collectionId}/verses`, // ✅ /auth/v1/
+    `${QF_API_BASE}/auth/v1/collections/${collectionId}/verses`,
     {
       method: "POST",
       headers: userHeaders(accessToken),
@@ -81,7 +84,7 @@ export async function deleteQFCollectionItem(
   verseKey: string
 ) {
   const res = await fetch(
-    `${QF_API_BASE}/auth/v1/collections/${collectionId}/verses/${verseKey}`, // ✅ /auth/v1/
+    `${QF_API_BASE}/auth/v1/collections/${collectionId}/verses/${verseKey}`,
     {
       method: "DELETE",
       headers: userHeaders(accessToken),
@@ -94,10 +97,14 @@ export async function deleteQFCollectionItem(
   }
 }
 
-export async function getOrCreateMyKitCollection(accessToken: string): Promise<number> {
+export async function getOrCreateMyKitCollection(
+  accessToken: string
+): Promise<number> {
   const data = await getQFCollections(accessToken);
   const collections = data.collections ?? data.data ?? [];
-  const existing = collections.find((c: { name: string }) => c.name === "My Kit");
+  const existing = collections.find(
+    (c: { name: string }) => c.name === "My Kit"
+  );
   if (existing) return existing.id;
   const created = await createQFCollection(accessToken, "My Kit");
   return created.id ?? created.collection?.id;

@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { generateState, generatePkcePair } from "@/lib/auth";
-import { getAuthorizationUrl } from "@/lib/auth";
+import { generateState, generatePkcePair, getAuthorizationUrl } from "@/lib/auth";
 import { getSession } from "@/lib/session";
 
 export async function GET() {

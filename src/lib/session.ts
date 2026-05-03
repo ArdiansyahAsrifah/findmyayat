@@ -4,7 +4,8 @@ import { cookies } from "next/headers";
 export interface SessionData {
   accessToken?: string;
   refreshToken?: string;
-  idTokenHint?: string;  // ✅ Ganti idToken → idTokenHint (hanya sub, bukan full JWT)
+  idTokenHint?: string;
+  tokenExpiresAt?: number;
   user?: {
     sub: string;
     email?: string;

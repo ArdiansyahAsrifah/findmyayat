@@ -8,7 +8,9 @@ export async function GET(req: NextRequest) {
   const state = searchParams.get("state");
   const error = searchParams.get("error");
 
-  const APP_URL = (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
+  const APP_URL = (
+    process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
+  ).replace(/\/$/, "");
 
   if (error) {
     console.error("[callback] OAuth error:", error);
@@ -42,9 +44,8 @@ export async function GET(req: NextRequest) {
 
     session.accessToken = tokens.access_token;
     session.refreshToken = tokens.refresh_token;
-    // ✅ Jangan simpan idToken di cookie — terlalu besar
-    // Simpan hanya expiry-nya jika perlu logout
-    session.idTokenHint = userInfo.sub; // ← hanya sub, bukan full JWT
+    session.idTokenHint = userInfo.sub;
+    session.tokenExpiresAt = Date.now() + (tokens.expires_in ?? 3600) * 1000;
     session.user = {
       sub: userInfo?.sub ?? "",
       email: userInfo?.email,
@@ -62,6 +63,8 @@ export async function GET(req: NextRequest) {
   } catch (err) {
     const message = err instanceof Error ? err.message : "unknown";
     console.error("[callback] Error:", message);
-    return NextResponse.redirect(`${APP_URL}/?auth_error=token&detail=${encodeURIComponent(message)}`);
+    return NextResponse.redirect(
+      `${APP_URL}/?auth_error=token&detail=${encodeURIComponent(message)}`
+    );
   }
 }

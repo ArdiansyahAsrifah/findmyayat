@@ -6,9 +6,7 @@ const CLIENT_SECRET = process.env.QF_CLIENT_SECRET!;
 
 export function getRedirectUri() {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-  if (!appUrl) {
-    throw new Error("NEXT_PUBLIC_APP_URL is not set");
-  }
+  if (!appUrl) throw new Error("NEXT_PUBLIC_APP_URL is not set");
   return `${appUrl.replace(/\/$/, "")}/api/auth/callback`;
 }
 
@@ -40,7 +38,10 @@ export function getAuthorizationUrl(
   url.searchParams.set("response_type", "code");
   url.searchParams.set("client_id", CLIENT_ID);
   url.searchParams.set("redirect_uri", getRedirectUri());
-  url.searchParams.set("scope", "openid offline_access bookmark collection user");
+  url.searchParams.set(
+    "scope",
+    "openid offline_access bookmark collection post.read user"
+  );
   url.searchParams.set("state", state);
   url.searchParams.set("nonce", nonce);
   url.searchParams.set("code_challenge", codeChallenge);
@@ -48,15 +49,19 @@ export function getAuthorizationUrl(
   return url.toString();
 }
 
-export async function exchangeCodeForTokens(code: string, codeVerifier: string) {
-  // ✅ Gunakan Basic Auth, bukan client_secret di body
-  const credentials = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString("base64");
+export async function exchangeCodeForTokens(
+  code: string,
+  codeVerifier: string
+) {
+  const credentials = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString(
+    "base64"
+  );
 
   const res = await fetch(`${OAUTH_BASE}/oauth2/token`, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
-      "Authorization": `Basic ${credentials}`,
+      Authorization: `Basic ${credentials}`,
     },
     body: new URLSearchParams({
       grant_type: "authorization_code",

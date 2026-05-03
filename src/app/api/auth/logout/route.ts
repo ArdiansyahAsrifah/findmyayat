@@ -4,15 +4,19 @@ import { getSession } from "@/lib/session";
 export async function GET() {
   const session = await getSession();
 
-  const APP_URL = (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
-  const QF_OAUTH_BASE = process.env.QF_OAUTH_BASE ?? "https://prelive-oauth2.quran.foundation";
+  const APP_URL = (
+    process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
+  ).replace(/\/$/, "");
+  const QF_OAUTH_BASE =
+    process.env.QF_OAUTH_BASE ?? "https://prelive-oauth2.quran.foundation";
 
   session.destroy();
 
-  // Tanpa id_token_hint karena tidak disimpan lagi
   const params = new URLSearchParams({
     post_logout_redirect_uri: `${APP_URL}/`,
   });
 
-  return NextResponse.redirect(`${QF_OAUTH_BASE}/oauth2/sessions/logout?${params}`);
+  return NextResponse.redirect(
+    `${QF_OAUTH_BASE}/oauth2/sessions/logout?${params}`
+  );
 }
