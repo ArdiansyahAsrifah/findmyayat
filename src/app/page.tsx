@@ -14,6 +14,7 @@ import {
   addToKit,
 } from "@/lib/storage";
 import { Ayat } from "@/types";
+import StreakBadge from "@/components/StreakBadge";
 
 // ✅ FIXED: keys now match the English category strings in situations.ts
 const categoryEmojis: Record<string, string> = {
@@ -37,6 +38,7 @@ const categoryLabels: Record<string, string> = {
 type SearchState = "idle" | "searching" | "done" | "error";
 
 export default function Home() {
+  const [streakKey, setStreakKey] = useState(0);
   const [story, setStory] = useState("");
   const [searchState, setSearchState] = useState<SearchState>("idle");
   const [storyResults, setStoryResults] = useState<Ayat[]>([]);
@@ -68,6 +70,7 @@ export default function Home() {
       setBookmarkedIds(bIds);
       setStoryResults(ayats);
       setSearchState("done");
+      setStreakKey((k) => k + 1); 
     } catch (err) {
       console.error(err);
       setSearchState("error");
@@ -210,6 +213,9 @@ export default function Home() {
               </span>
               <div className="flex-1 h-px bg-stone-200" />
             </div>
+
+            <StreakBadge key={streakKey} record={streakKey > 0} />
+
             {storyResults.map((ayat) => (
               <AyatCard
                 key={ayat.id}
