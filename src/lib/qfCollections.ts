@@ -13,7 +13,7 @@ function userHeaders(accessToken: string) {
 
 // ✅ Pakai __default__ — tidak perlu buat collection, tidak butuh scope create
 export async function getQFCollectionItems(accessToken: string) {
-  const url = `${QF_API_BASE}/auth/v1/collections/__default__?first=50`;
+  const url = `${QF_API_BASE}/auth/v1/collections/__default__?first=20`;
   console.log("[getQFCollectionItems] fetching:", url);
   const res = await fetch(url, {
     headers: userHeaders(accessToken),
