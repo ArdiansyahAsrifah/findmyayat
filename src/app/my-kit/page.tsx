@@ -4,52 +4,97 @@ import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import AyatCard from "@/components/AyatCard";
 import Link from "next/link";
-import {
-  getKit,
-  getBookmarks,
-  KitItem,
-  removeFromKit,
-  updateReflection,
-  removeBookmark,
-  isBookmarked,
-  addBookmark,
-} from "@/lib/storage";
 import { Ayat } from "@/types";
 
 type Tab = "kit" | "bookmarks";
 
+interface BookmarkItem {
+  id: number;
+  verse_key: string;
+  ayat?: Ayat;
+}
+
+interface CollectionItem {
+  verse_key: string;
+  ayat?: Ayat;
+}
+
 export default function MyKitPage() {
   const [activeTab, setActiveTab] = useState<Tab>("kit");
-  const [kit, setKit] = useState<KitItem[]>([]);
-  const [bookmarks, setBookmarks] = useState<Ayat[]>([]);
-  const [editingReflection, setEditingReflection] = useState<number | null>(null);
-  const [reflectionText, setReflectionText] = useState("");
+  const [kit, setKit] = useState<CollectionItem[]>([]);
+  const [bookmarks, setBookmarks] = useState<BookmarkItem[]>([]);
+  const [loadingKit, setLoadingKit] = useState(false);
+  const [loadingBookmarks, setLoadingBookmarks] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setKit(getKit());
-    setBookmarks(getBookmarks());
-  }, []);
+    if (activeTab === "kit") fetchKit();
+    if (activeTab === "bookmarks") fetchBookmarks();
+  }, [activeTab]);
 
-  const handleRemoveFromKit = (ayatId: number) => {
-    removeFromKit(ayatId);
-    setKit(getKit());
-  };
-
-  const handleSaveReflection = (ayatId: number) => {
-    updateReflection(ayatId, reflectionText);
-    setKit(getKit());
-    setEditingReflection(null);
-    setReflectionText("");
-  };
-
-  const handleBookmark = (ayat: Ayat) => {
-    if (isBookmarked(ayat.id)) {
-      removeBookmark(ayat.id);
-    } else {
-      addBookmark(ayat);
+  async function fetchKit() {
+    setLoadingKit(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/collections");
+      if (res.status === 401) {
+        setError("Please login to view your kit");
+        return;
+      }
+      if (!res.ok) throw new Error("Failed to fetch kit");
+      const data = await res.json();
+      setKit(data.items?.data ?? data.items ?? []);
+    } catch {
+      setError("Failed to load kit");
+    } finally {
+      setLoadingKit(false);
     }
-    setBookmarks(getBookmarks());
-  };
+  }
+
+  async function fetchBookmarks() {
+    setLoadingBookmarks(false);
+    setError(null);
+    try {
+      const res = await fetch("/api/bookmarks");
+      if (res.status === 401) {
+        setError("Please login to view your bookmarks");
+        return;
+      }
+      if (!res.ok) throw new Error("Failed to fetch bookmarks");
+      const data = await res.json();
+      setBookmarks(data.bookmarks ?? data.data ?? data ?? []);
+    } catch {
+      setError("Failed to load bookmarks");
+    } finally {
+      setLoadingBookmarks(false);
+    }
+  }
+
+  async function handleRemoveFromKit(verseKey: string) {
+    try {
+      await fetch("/api/collections", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ verseKey }),
+      });
+      setKit((prev) => prev.filter((item) => item.verse_key !== verseKey));
+    } catch {
+      setError("Failed to remove from kit");
+    }
+  }
+
+  async function handleRemoveBookmark(bookmarkId: number) {
+    try {
+      await fetch("/api/bookmarks", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookmarkId }),
+      });
+      setBookmarks((prev) => prev.filter((b) => b.id !== bookmarkId));
+    } catch {
+      setError("Failed to remove bookmark");
+    }
+  }
 
   return (
     <div className="min-h-screen bg-stone-50">
@@ -59,10 +104,15 @@ export default function MyKitPage() {
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-stone-800 mb-1">My Kit</h1>
-          <p className="text-stone-500 text-sm">
-            Your collection
-          </p>
+          <p className="text-stone-500 text-sm">Your collection</p>
         </div>
+
+        {/* Error banner */}
+        {error && (
+          <div className="mb-4 px-4 py-3 rounded-xl bg-red-50 border border-red-100 text-sm text-red-600">
+            {error}
+          </div>
+        )}
 
         {/* Tabs */}
         <div className="flex gap-2 mb-6 bg-stone-100 p-1 rounded-xl">
@@ -84,14 +134,20 @@ export default function MyKitPage() {
                 : "text-stone-500 hover:text-stone-700"
             }`}
           >
-            🔖 Bookmark ({bookmarks.length})
+            🔖 Bookmarks ({bookmarks.length})
           </button>
         </div>
 
         {/* Kit Tab */}
         {activeTab === "kit" && (
           <div>
-            {kit.length === 0 ? (
+            {loadingKit ? (
+              <div className="space-y-4">
+                {[1, 2].map((i) => (
+                  <div key={i} className="animate-pulse h-40 rounded-2xl bg-stone-100" />
+                ))}
+              </div>
+            ) : kit.length === 0 ? (
               <div className="text-center py-20 text-stone-400">
                 <p className="text-4xl mb-3">📦</p>
                 <p className="text-sm mb-4">Kit kamu masih kosong</p>
@@ -104,80 +160,33 @@ export default function MyKitPage() {
               </div>
             ) : (
               <div className="flex flex-col gap-6">
-                {kit.map((item) => (
-                  <div key={item.ayat.id}>
-                    {/* Situation Label */}
-                    <div className="flex items-center gap-2 mb-2">
-                      <span>{item.situationEmoji}</span>
-                      <Link
-                        href={`/situation/${item.situationSlug}`}
-                        className="text-xs text-stone-400 hover:text-emerald-600 transition-colors"
-                      >
-                        {item.situationTitle}
-                      </Link>
-                    </div>
-
-                    <AyatCard
-                      ayat={item.ayat}
-                      isBookmarked={isBookmarked(item.ayat.id)}
-                    />
-
-                    {/* Reflection Box */}
-                    <div className="mt-2 bg-white border border-stone-100 rounded-2xl p-4">
-                      {editingReflection === item.ayat.id ? (
-                        <div>
-                          <textarea
-                            className="w-full text-sm text-stone-700 bg-stone-50 rounded-xl p-3 border border-stone-200 resize-none focus:outline-none focus:border-emerald-300"
-                            rows={3}
-                            placeholder="Tulis refleksimu tentang ayat ini..."
-                            value={reflectionText}
-                            onChange={(e) => setReflectionText(e.target.value)}
-                          />
-                          <div className="flex gap-2 mt-2">
-                            <button
-                              onClick={() => handleSaveReflection(item.ayat.id)}
-                              className="text-xs bg-emerald-600 text-white px-3 py-1.5 rounded-lg hover:bg-emerald-700"
-                            >
-                              Save
-                            </button>
-                            <button
-                              onClick={() => setEditingReflection(null)}
-                              className="text-xs bg-stone-100 text-stone-600 px-3 py-1.5 rounded-lg hover:bg-stone-200"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </div>
+                {kit.map((item) => {
+                  const [surah, verse] = item.verse_key.split(":");
+                  return (
+                    <div key={item.verse_key}>
+                      {item.ayat ? (
+                        <AyatCard ayat={item.ayat} />
                       ) : (
+                        // Fallback jika ayat detail belum di-fetch
                         <div
-                          onClick={() => {
-                            setEditingReflection(item.ayat.id);
-                            setReflectionText(item.reflection || "");
+                          className="rounded-2xl px-5 py-4 text-sm text-stone-600"
+                          style={{
+                            background: "linear-gradient(135deg, #faf9f7, #f5f2ec)",
+                            border: "1px solid rgba(180,160,120,0.2)",
                           }}
-                          className="cursor-pointer"
                         >
-                          {item.reflection ? (
-                            <p className="text-sm text-stone-600 italic">
-                              "{item.reflection}"
-                            </p>
-                          ) : (
-                            <p className="text-xs text-stone-400 hover:text-emerald-500 transition-colors">
-                              ✏️ Add personal reflection...
-                            </p>
-                          )}
+                          📖 Surah {surah}, Verse {verse}
                         </div>
                       )}
+                      <button
+                        onClick={() => handleRemoveFromKit(item.verse_key)}
+                        className="mt-1 text-xs text-stone-300 hover:text-red-400 transition-colors"
+                      >
+                        Hapus dari Kit
+                      </button>
                     </div>
-
-                    {/* Remove Button */}
-                    <button
-                      onClick={() => handleRemoveFromKit(item.ayat.id)}
-                      className="mt-1 text-xs text-stone-300 hover:text-red-400 transition-colors"
-                    >
-                      Hapus dari Kit
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -186,7 +195,13 @@ export default function MyKitPage() {
         {/* Bookmarks Tab */}
         {activeTab === "bookmarks" && (
           <div>
-            {bookmarks.length === 0 ? (
+            {loadingBookmarks ? (
+              <div className="space-y-4">
+                {[1, 2].map((i) => (
+                  <div key={i} className="animate-pulse h-40 rounded-2xl bg-stone-100" />
+                ))}
+              </div>
+            ) : bookmarks.length === 0 ? (
               <div className="text-center py-20 text-stone-400">
                 <p className="text-4xl mb-3">🔖</p>
                 <p className="text-sm mb-4">Nothing Found</p>
@@ -199,12 +214,28 @@ export default function MyKitPage() {
               </div>
             ) : (
               <div className="flex flex-col gap-4">
-                {bookmarks.map((ayat) => (
-                  <AyatCard
-                    key={ayat.id}
-                    ayat={ayat}
-                    isBookmarked={true}
-                  />
+                {bookmarks.map((bookmark) => (
+                  <div key={bookmark.id}>
+                    {bookmark.ayat ? (
+                      <AyatCard ayat={bookmark.ayat} isBookmarked />
+                    ) : (
+                      <div
+                        className="rounded-2xl px-5 py-4 text-sm text-stone-600"
+                        style={{
+                          background: "linear-gradient(135deg, #faf9f7, #f5f2ec)",
+                          border: "1px solid rgba(180,160,120,0.2)",
+                        }}
+                      >
+                        📖 {bookmark.verse_key}
+                      </div>
+                    )}
+                    <button
+                      onClick={() => handleRemoveBookmark(bookmark.id)}
+                      className="mt-1 text-xs text-stone-300 hover:text-red-400 transition-colors"
+                    >
+                      Hapus bookmark
+                    </button>
+                  </div>
                 ))}
               </div>
             )}

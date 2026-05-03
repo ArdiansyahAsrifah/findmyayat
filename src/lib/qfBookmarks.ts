@@ -1,23 +1,11 @@
-// const QF_API_BASE =
-//   process.env.QF_ENV === "production"
-//     ? "https://apis.quran.foundation"
-//     : "https://apis-prelive.quran.foundation";
-
-// function userHeaders(accessToken: string) {
-//   return {
-//     Authorization: `Bearer ${accessToken}`,
-//     "Content-Type": "application/json",
-//   };
-// }
-
 import { QF_API_BASE } from "@/lib/contentToken";
 
 const CLIENT_ID = process.env.QF_CLIENT_ID ?? "";
 
 function userHeaders(accessToken: string) {
   return {
-    "x-auth-token": accessToken,   
-    "x-client-id": CLIENT_ID,     
+    "Authorization": `Bearer ${accessToken}`, // ✅ Standard Bearer token
+    "x-client-id": CLIENT_ID,
     "Content-Type": "application/json",
   };
 }
@@ -25,9 +13,12 @@ function userHeaders(accessToken: string) {
 export async function getQFBookmarks(accessToken: string) {
   const res = await fetch(`${QF_API_BASE}/bookmark/v1/bookmarks`, {
     headers: userHeaders(accessToken),
+    cache: "no-store",
   });
-
-  if (!res.ok) throw new Error("Failed get bookmarks");
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Failed get bookmarks: ${res.status} ${err}`);
+  }
   return res.json();
 }
 
@@ -43,8 +34,10 @@ export async function addQFBookmark(
       verse_key: `${surahNumber}:${verseNumber}`,
     }),
   });
-
-  if (!res.ok) throw new Error("Failed add bookmark");
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Failed add bookmark: ${res.status} ${err}`);
+  }
   return res.json();
 }
 
@@ -59,6 +52,8 @@ export async function deleteQFBookmark(
       headers: userHeaders(accessToken),
     }
   );
-
-  if (!res.ok) throw new Error("Failed delete bookmark");
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Failed delete bookmark: ${res.status} ${err}`);
+  }
 }
