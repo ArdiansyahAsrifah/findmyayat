@@ -14,7 +14,8 @@ function userHeaders(accessToken: string) {
 }
 
 export async function getQFBookmarks(accessToken: string) {
-  const url = `${QF_API_BASE}/auth/v1/bookmarks?first=20`;
+  // ✅ mushafId wajib sebagai query param di pre-live
+  const url = `${QF_API_BASE}/auth/v1/bookmarks?first=20&mushafId=1`;
   const res = await fetch(url, {
     headers: userHeaders(accessToken),
     cache: "no-store",
