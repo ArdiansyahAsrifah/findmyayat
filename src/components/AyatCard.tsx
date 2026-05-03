@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Ayat } from "@/types";
 import ReflectionsPanel from "@/components/ReflectionsPanel";
-import TafsirPanel from "@/components/TafsirPanel";
 import NotePanel from "@/components/NotePanel";
 
 interface Props {
@@ -332,54 +331,6 @@ export default function AyatCard({
           </div>
         )}
       </div>
-
-      {/* Tafsir panel */}
-      {showTafsir && (
-        <div
-          className="px-5 py-4 border-t"
-          style={{
-            background: "linear-gradient(135deg, rgba(236,253,245,0.5), rgba(209,250,229,0.4))",
-            borderColor: "rgba(52,211,153,0.15)",
-          }}
-        >
-          <TafsirPanel
-            surahNumber={ayat.surahNumber}
-            verseNumber={ayat.verseNumber}
-          />
-        </div>
-      )}
-
-      {/* Notes panel */}
-      {showNotes && (
-        <div
-          className="px-5 py-4 border-t"
-          style={{
-            background: "linear-gradient(135deg, rgba(254,243,199,0.4), rgba(253,230,138,0.2))",
-            borderColor: "rgba(180,140,60,0.15)",
-          }}
-        >
-          <NotePanel
-            surahNumber={ayat.surahNumber}
-            verseNumber={ayat.verseNumber}
-          />
-        </div>
-      )}
-
-      {/* Reflections panel */}
-      {showReflections && (
-        <div
-          className="px-5 py-4 border-t"
-          style={{
-            background: "linear-gradient(135deg, rgba(100,70,180,0.04), rgba(120,90,200,0.06))",
-            borderColor: "rgba(100,70,180,0.12)",
-          }}
-        >
-          <ReflectionsPanel
-            surahNumber={ayat.surahNumber}
-            verseNumber={ayat.verseNumber}
-          />
-        </div>
-      )}
 
       {/* Footer */}
       <div
