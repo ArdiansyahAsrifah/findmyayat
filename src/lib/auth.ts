@@ -4,8 +4,13 @@ const OAUTH_BASE = process.env.QF_OAUTH_BASE!;
 const CLIENT_ID = process.env.QF_CLIENT_ID!;
 const CLIENT_SECRET = process.env.QF_CLIENT_SECRET!;
 
-export const REDIRECT_URI =
-  process.env.NEXT_PUBLIC_APP_URL + "/api/auth/callback";
+export function getRedirectUri() {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  if (!appUrl) {
+    throw new Error("NEXT_PUBLIC_APP_URL is not set");
+  }
+  return `${appUrl.replace(/\/$/, "")}/api/auth/callback`;
+}
 
 export function generateState() {
   return crypto.randomBytes(16).toString("hex");
@@ -26,19 +31,18 @@ export function generatePkcePair() {
   return { codeVerifier, codeChallenge };
 }
 
-// ✅ Tambah parameter nonce
 export function getAuthorizationUrl(
   state: string,
   codeChallenge: string,
-  nonce: string          // ← BARU
+  nonce: string
 ) {
   const url = new URL(`${OAUTH_BASE}/oauth2/auth`);
   url.searchParams.set("response_type", "code");
   url.searchParams.set("client_id", CLIENT_ID);
-  url.searchParams.set("redirect_uri", REDIRECT_URI);
+  url.searchParams.set("redirect_uri", getRedirectUri());
   url.searchParams.set("scope", "openid offline_access bookmark collection user");
   url.searchParams.set("state", state);
-  url.searchParams.set("nonce", nonce);                  // ← BARU
+  url.searchParams.set("nonce", nonce);
   url.searchParams.set("code_challenge", codeChallenge);
   url.searchParams.set("code_challenge_method", "S256");
   return url.toString();
@@ -53,7 +57,7 @@ export async function exchangeCodeForTokens(code: string, codeVerifier: string) 
     body: new URLSearchParams({
       grant_type: "authorization_code",
       code,
-      redirect_uri: REDIRECT_URI,
+      redirect_uri: getRedirectUri(),
       client_id: CLIENT_ID,
       client_secret: CLIENT_SECRET,
       code_verifier: codeVerifier,
@@ -64,6 +68,7 @@ export async function exchangeCodeForTokens(code: string, codeVerifier: string) 
     const err = await res.text();
     throw new Error(`Token exchange failed: ${res.status} ${err}`);
   }
+
   return res.json();
 }
 

@@ -8,17 +8,17 @@ export async function GET(req: NextRequest) {
   const state = searchParams.get("state");
   const error = searchParams.get("error");
 
-  const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3004";
+  const APP_URL = (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
 
   if (error) {
-    console.error("OAuth error:", error);
+    console.error("[callback] OAuth error:", error);
     return NextResponse.redirect(`${APP_URL}/?auth_error=true`);
   }
 
   const session = await getSession();
 
   if (!state || state !== session.oauthState) {
-    console.error("❌ State mismatch");
+    console.error("[callback] State mismatch — received:", state, "expected:", session.oauthState);
     return NextResponse.redirect(`${APP_URL}/?auth_error=csrf`);
   }
 
@@ -35,9 +35,8 @@ export async function GET(req: NextRequest) {
     const tokens = await exchangeCodeForTokens(code, codeVerifier);
     const userInfo = decodeIdToken(tokens.id_token);
 
-    // ✅ Validasi nonce
     if (!userInfo?.nonce || userInfo.nonce !== session.nonce) {
-      console.error("❌ Nonce mismatch");
+      console.error("[callback] Nonce mismatch — received:", userInfo?.nonce, "expected:", session.nonce);
       return NextResponse.redirect(`${APP_URL}/?auth_error=nonce`);
     }
 
@@ -53,12 +52,13 @@ export async function GET(req: NextRequest) {
 
     delete session.oauthState;
     delete session.codeVerifier;
-    delete session.nonce;                           // ← BARU hapus nonce setelah dipakai
+    delete session.nonce;
+
     await session.save();
 
     return NextResponse.redirect(`${APP_URL}/`);
   } catch (err) {
-    console.error("❌ Callback error:", err);
+    console.error("[callback] Error:", err);
     return NextResponse.redirect(`${APP_URL}/?auth_error=token`);
   }
 }
