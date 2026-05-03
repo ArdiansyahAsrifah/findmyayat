@@ -45,7 +45,7 @@ export default function Home() {
 
       setMatchedSituation({ title: situation.title, emoji: situation.emoji });
 
-      const ayats = await getAyatsBySituation(situation.searchQuery, 5);
+      const ayats = await getAyatsBySituation(situation.searchQuery, 15);
 
       const bIds = ayats.filter((a) => isBookmarked(a.id)).map((a) => a.id);
       setBookmarkedIds(bIds);
