@@ -1,4 +1,3 @@
-// src/components/StreakBadge.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -9,8 +8,7 @@ interface StreakData {
 }
 
 interface StreakBadgeProps {
-  // true = langsung POST record, false = hanya GET
-  record?: boolean;
+  record?: boolean; // true = POST, false = GET only
 }
 
 export default function StreakBadge({ record = false }: StreakBadgeProps) {
@@ -29,11 +27,11 @@ export default function StreakBadge({ record = false }: StreakBadgeProps) {
   async function fetchOnly() {
     try {
       const res = await fetch("/api/streak");
-      if (!res.ok) return;
+      if (!res.ok) return; // user belum login → silent
       const data = await res.json();
       if (data.streak) setStreak(normalize(data.streak));
     } catch {
-      // silent — streak bukan fitur kritis
+      // silent
     } finally {
       setLoading(false);
     }
@@ -57,12 +55,14 @@ export default function StreakBadge({ record = false }: StreakBadgeProps) {
 
   function normalize(raw: any): StreakData {
     return {
-      currentStreak: raw.currentStreak ?? raw.current_streak ?? raw.streak ?? 0,
-      longestStreak: raw.longestStreak ?? raw.longest_streak ?? raw.best ?? 0,
+      currentStreak:
+        raw.currentStreak ?? raw.current_streak ?? raw.streak ?? 0,
+      longestStreak:
+        raw.longestStreak ?? raw.longest_streak ?? raw.best ?? 0,
     };
   }
 
-  // Kalau masih loading atau user belum login → render nothing
+  // User belum login atau data belum ada → tidak render apapun
   if (loading || !streak) return null;
 
   return (
@@ -70,7 +70,7 @@ export default function StreakBadge({ record = false }: StreakBadgeProps) {
       className={`rounded-2xl border px-5 py-4 transition-all ${
         justRecorded
           ? "bg-amber-50 border-amber-200"
-          : "bg-stone-50 border-stone-100"
+          : "bg-white border-stone-200"
       }`}
     >
       {justRecorded && (

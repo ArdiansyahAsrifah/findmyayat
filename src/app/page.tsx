@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import Navbar from "@/components/Navbar";
-import SituationCard from "@/components/SituationCard";
 import AyatCard from "@/components/AyatCard";
-import { categories, getSituationsByCategory, getSituationBySlug } from "@/lib/situations";
+import StreakBadge from "@/components/StreakBadge";
+import { getSituationBySlug } from "@/lib/situations";
 import { getAyatsBySituation } from "@/lib/quranapi";
 import { extractSituationSlug } from "@/components/StorySearch";
 import {
@@ -14,36 +14,19 @@ import {
   addToKit,
 } from "@/lib/storage";
 import { Ayat } from "@/types";
-import StreakBadge from "@/components/StreakBadge";
-
-// ✅ FIXED: keys now match the English category strings in situations.ts
-const categoryEmojis: Record<string, string> = {
-  "Pressure & Anxiety": "😰",
-  "Relationships": "💔",
-  "Career & Study": "📉",
-  "Health & Loss": "🏥",
-  "Spiritual": "🙏",
-  "Financial": "💰",
-};
-
-const categoryLabels: Record<string, string> = {
-  "Pressure & Anxiety": "Anxiety & Pressure",
-  "Relationships": "Relationships",
-  "Career & Study": "Career & Studies",
-  "Health & Loss": "Health & Loss",
-  "Spiritual": "Spiritual",
-  "Financial": "Financial",
-};
 
 type SearchState = "idle" | "searching" | "done" | "error";
 
 export default function Home() {
-  const [streakKey, setStreakKey] = useState(0);
   const [story, setStory] = useState("");
   const [searchState, setSearchState] = useState<SearchState>("idle");
   const [storyResults, setStoryResults] = useState<Ayat[]>([]);
-  const [matchedSituation, setMatchedSituation] = useState<{ title: string; emoji: string } | null>(null);
+  const [matchedSituation, setMatchedSituation] = useState<{
+    title: string;
+    emoji: string;
+  } | null>(null);
   const [bookmarkedIds, setBookmarkedIds] = useState<number[]>([]);
+  const [streakKey, setStreakKey] = useState(0);
 
   const handleStorySearch = async () => {
     const trimmed = story.trim();
@@ -54,23 +37,21 @@ export default function Home() {
     setMatchedSituation(null);
 
     try {
-      // 1. Map the story to the most relevant situation slug
       const slug = extractSituationSlug(trimmed);
-
-      // 2. Get that situation's proven searchQuery
       const situation = getSituationBySlug(slug);
       if (!situation) throw new Error("Situation not found");
 
       setMatchedSituation({ title: situation.title, emoji: situation.emoji });
 
-      // 3. Fetch ayats using the curated searchQuery (same as situation pages)
       const ayats = await getAyatsBySituation(situation.searchQuery, 5);
 
       const bIds = ayats.filter((a) => isBookmarked(a.id)).map((a) => a.id);
       setBookmarkedIds(bIds);
       setStoryResults(ayats);
       setSearchState("done");
-      setStreakKey((k) => k + 1); 
+
+      // ✅ Trigger POST streak setiap kali search berhasil
+      setStreakKey((k) => k + 1);
     } catch (err) {
       console.error(err);
       setSearchState("error");
@@ -125,10 +106,15 @@ export default function Home() {
             <span className="text-emerald-600">today?</span>
           </h1>
           <p className="text-stone-500 text-base leading-relaxed">
-            Tell your story or pick a situation — find the verse that speaks
-            to your heart.
+            Tell your story or pick a situation — find the verse that speaks to
+            your heart.
           </p>
         </div>
+      </section>
+
+      {/* ✅ Streak — selalu tampil di homepage kalau user login */}
+      <section className="max-w-2xl mx-auto px-4 pb-4">
+        <StreakBadge key={streakKey} record={streakKey > 0} />
       </section>
 
       {/* Story Search */}
@@ -148,14 +134,24 @@ export default function Home() {
           <div className="flex items-center justify-between px-5 py-3 border-t border-stone-100 bg-stone-50 min-h-[48px]">
             {searchState === "idle" && (
               <>
-                <span className="text-xs text-stone-400">⌘ + Enter to search</span>
+                <span className="text-xs text-stone-400">
+                  ⌘ + Enter to search
+                </span>
                 <button
                   onClick={handleStorySearch}
                   disabled={!story.trim()}
                   className="flex items-center gap-2 bg-emerald-600 text-white text-xs font-semibold px-4 py-2 rounded-xl hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
                   Find verses
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 12 12"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  >
                     <path d="M2 6h8M6 2l4 4-4 4" />
                   </svg>
                 </button>
@@ -173,7 +169,9 @@ export default function Home() {
                     />
                   ))}
                 </span>
-                <span className="text-xs text-stone-500">Searching for verses...</span>
+                <span className="text-xs text-stone-500">
+                  Searching for verses...
+                </span>
               </div>
             )}
 
@@ -214,8 +212,6 @@ export default function Home() {
               <div className="flex-1 h-px bg-stone-200" />
             </div>
 
-            <StreakBadge key={streakKey} record={streakKey > 0} />
-
             {storyResults.map((ayat) => (
               <AyatCard
                 key={ayat.id}
@@ -230,11 +226,12 @@ export default function Home() {
         {searchState === "done" && storyResults.length === 0 && (
           <div className="mt-4 text-center py-10 text-stone-400">
             <p className="text-3xl mb-2">🔍</p>
-            <p className="text-sm">No verses found. Try describing your feelings differently.</p>
+            <p className="text-sm">
+              No verses found. Try describing your feelings differently.
+            </p>
           </div>
         )}
       </section>
-
 
       {/* Footer */}
       <footer className="text-center py-8 text-stone-400 text-xs border-t border-stone-100 bg-white">
