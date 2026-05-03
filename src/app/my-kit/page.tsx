@@ -31,15 +31,9 @@ interface BookmarkItem {
   ayat?: Ayat;
 }
 
-// ✅ Fetch detail ayat
-async function fetchAyatDetail(
-  surahNumber: number,
-  verseNumber: number
-): Promise<Ayat | null> {
+async function fetchAyatDetail(surahNumber: number, verseNumber: number): Promise<Ayat | null> {
   try {
-    const res = await fetch(
-      `/api/ayat?surah=${surahNumber}&verse=${verseNumber}`
-    );
+    const res = await fetch(`/api/ayat?surah=${surahNumber}&verse=${verseNumber}`);
     if (!res.ok) return null;
     const data = await res.json();
     return data.ayat ?? data ?? null;
@@ -66,14 +60,10 @@ export default function MyKitPage() {
     setError(null);
     try {
       const res = await fetch("/api/collections");
-      if (res.status === 401) {
-        setError("Please login to view your kit");
-        return;
-      }
+      if (res.status === 401) { setError("Please login to view your kit"); return; }
       if (!res.ok) throw new Error("Failed to fetch kit");
       const data = await res.json();
       const items: CollectionItem[] = data.items ?? [];
-
       const itemsWithAyat = await Promise.all(
         items
           .filter((item) => item.type === "ayah" && item.verseNumber != null)
@@ -82,7 +72,6 @@ export default function MyKitPage() {
             return { ...item, ayat: ayat ?? undefined };
           })
       );
-
       setKit(itemsWithAyat);
     } catch {
       setError("Failed to load kit");
@@ -96,14 +85,10 @@ export default function MyKitPage() {
     setError(null);
     try {
       const res = await fetch("/api/bookmarks");
-      if (res.status === 401) {
-        setError("Please login to view your bookmarks");
-        return;
-      }
+      if (res.status === 401) { setError("Please login to view your bookmarks"); return; }
       if (!res.ok) throw new Error("Failed to fetch bookmarks");
       const data = await res.json();
       const items: BookmarkItem[] = data.data ?? data.bookmarks ?? [];
-
       const itemsWithAyat = await Promise.all(
         items
           .filter((item) => item.type === "ayah" && item.verseNumber != null)
@@ -112,7 +97,6 @@ export default function MyKitPage() {
             return { ...item, ayat: ayat ?? undefined };
           })
       );
-
       setBookmarks(itemsWithAyat);
     } catch {
       setError("Failed to load bookmarks");
@@ -148,102 +132,114 @@ export default function MyKitPage() {
   }
 
   function getVerseLabel(item: CollectionItem | BookmarkItem): string {
-    if (item.type === "ayah" && item.verseNumber != null)
-      return `Surah ${item.key}, Ayat ${item.verseNumber}`;
+    if (item.type === "ayah" && item.verseNumber != null) return `Surah ${item.key}, Ayat ${item.verseNumber}`;
     if (item.type === "surah") return `Surah ${item.key}`;
     if (item.type === "juz") return `Juz ${item.key}`;
     if (item.type === "page") return `Page ${item.key}`;
     return `${item.key}`;
   }
 
+  const Skeleton = () => (
+    <div className="flex flex-col gap-4">
+      {[1, 2, 3].map((i) => (
+        <div
+          key={i}
+          className="animate-pulse h-48 rounded-2xl"
+          style={{ background: "#E8E2D6" }}
+        />
+      ))}
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen" style={{ background: "#F5F0E8" }}>
       <Navbar />
+
       <div className="max-w-2xl mx-auto px-4 pt-24 pb-20">
 
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-stone-800 mb-1">My Kit</h1>
-          <p className="text-stone-500 text-sm">Your collection</p>
+          <h1 className="text-2xl font-bold mb-1" style={{ color: "#1A1A1A" }}>My Kit</h1>
+          <p className="text-sm" style={{ color: "#6B6B5E" }}>Your collection</p>
         </div>
 
         {/* Error */}
         {error && (
-          <div className="mb-4 px-4 py-3 rounded-xl bg-red-50 border border-red-100 text-sm text-red-600">
+          <div
+            className="mb-4 px-4 py-3 rounded-xl text-sm"
+            style={{
+              background: "rgba(192, 57, 43, 0.06)",
+              border: "0.5px solid rgba(192, 57, 43, 0.2)",
+              color: "#c0392b",
+            }}
+          >
             {error}
           </div>
         )}
 
         {/* Tabs */}
-        <div className="flex gap-2 mb-6 bg-stone-100 p-1 rounded-xl">
-          <button
-            onClick={() => setActiveTab("kit")}
-            className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium ${
-              activeTab === "kit"
-                ? "bg-white text-stone-800 shadow-sm"
-                : "text-stone-500"
-            }`}
-          >
-            📦 Kit ({kit.length})
-          </button>
-
-          <button
-            onClick={() => setActiveTab("bookmarks")}
-            className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium ${
-              activeTab === "bookmarks"
-                ? "bg-white text-stone-800 shadow-sm"
-                : "text-stone-500"
-            }`}
-          >
-            🔖 Bookmarks ({bookmarks.length})
-          </button>
+        <div
+          className="flex gap-1 mb-6 p-1 rounded-xl"
+          style={{ background: "#E8E2D6" }}
+        >
+          {(["kit", "bookmarks"] as Tab[]).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className="flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all"
+              style={
+                activeTab === tab
+                  ? { background: "#FFFFFF", color: "#1A1A1A" }
+                  : { background: "transparent", color: "#6B6B5E" }
+              }
+            >
+              {tab === "kit" ? `📦 Kit (${kit.length})` : `🔖 Bookmarks (${bookmarks.length})`}
+            </button>
+          ))}
         </div>
 
         {/* KIT */}
         {activeTab === "kit" && (
           <div>
             {loadingKit ? (
-              <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="animate-pulse h-48 bg-stone-100 rounded-2xl" />
-                ))}
-              </div>
+              <Skeleton />
             ) : kit.length === 0 ? (
-              <div className="text-center py-20 text-stone-400">
+              <div className="text-center py-20" style={{ color: "#6B6B5E" }}>
                 <p className="text-4xl mb-3">📦</p>
                 <p className="text-sm mb-4">Kit kamu masih kosong</p>
-                <Link href="/" className="text-emerald-600 text-sm">
+                <Link href="/" className="text-sm font-medium" style={{ color: "#1C4F3A" }}>
                   Temukan ayatmu →
                 </Link>
               </div>
             ) : (
               <div className="flex flex-col gap-6">
-              {kit.map((item) => (
-                <div key={item.id}>
-                  {item.ayat ? (
-                    <AyatCard ayat={item.ayat} isInKit hideActions />
-                  ) : (
-                    <div className="rounded-2xl px-5 py-4 text-sm text-stone-600">
-                      📖 {getVerseLabel(item)}
-                    </div>
-                  )}
-
-                  {/* ✅ Notes panel — hanya untuk ayat yang ada detail-nya */}
-                  {item.ayat && (
-                    <NotePanel
-                      surahNumber={item.ayat.surahNumber}
-                      verseNumber={item.ayat.verseNumber}
-                    />
-                  )}
-
-                  <button
-                    onClick={() => handleRemoveFromKit(item.id)}
-                    className="mt-1 text-xs text-stone-300 hover:text-red-400"
-                  >
-                    Hapus dari Kit
-                  </button>
-                </div>
-              ))}
+                {kit.map((item) => (
+                  <div key={item.id}>
+                    {item.ayat ? (
+                      <AyatCard ayat={item.ayat} isInKit hideActions />
+                    ) : (
+                      <div
+                        className="rounded-2xl px-5 py-4 text-sm"
+                        style={{ color: "#6B6B5E", background: "#FFFFFF", border: "0.5px solid #E8E2D6" }}
+                      >
+                        📖 {getVerseLabel(item)}
+                      </div>
+                    )}
+                    {item.ayat && (
+                      <NotePanel
+                        surahNumber={item.ayat.surahNumber}
+                        verseNumber={item.ayat.verseNumber}
+                      />
+                    )}
+                    <button
+                      onClick={() => handleRemoveFromKit(item.id)}
+                      className="mt-1 text-xs transition-opacity hover:opacity-70"
+                      style={{ color: "#6B6B5E" }}
+                    >
+                      Hapus dari Kit
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -253,16 +249,12 @@ export default function MyKitPage() {
         {activeTab === "bookmarks" && (
           <div>
             {loadingBookmarks ? (
-              <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="animate-pulse h-48 bg-stone-100 rounded-2xl" />
-                ))}
-              </div>
+              <Skeleton />
             ) : bookmarks.length === 0 ? (
-              <div className="text-center py-20 text-stone-400">
+              <div className="text-center py-20" style={{ color: "#6B6B5E" }}>
                 <p className="text-4xl mb-3">🔖</p>
                 <p className="text-sm mb-4">Nothing Found</p>
-                <Link href="/" className="text-emerald-600 text-sm">
+                <Link href="/" className="text-sm font-medium" style={{ color: "#1C4F3A" }}>
                   Search your ayat →
                 </Link>
               </div>
@@ -273,14 +265,17 @@ export default function MyKitPage() {
                     {bookmark.ayat ? (
                       <AyatCard ayat={bookmark.ayat} isBookmarked hideActions />
                     ) : (
-                      <div className="rounded-2xl px-5 py-4 text-sm text-stone-600">
+                      <div
+                        className="rounded-2xl px-5 py-4 text-sm"
+                        style={{ color: "#6B6B5E", background: "#FFFFFF", border: "0.5px solid #E8E2D6" }}
+                      >
                         📖 {getVerseLabel(bookmark)}
                       </div>
                     )}
-
                     <button
                       onClick={() => handleRemoveBookmark(bookmark.id)}
-                      className="mt-1 text-xs text-stone-300 hover:text-red-400"
+                      className="mt-1 text-xs transition-opacity hover:opacity-70"
+                      style={{ color: "#6B6B5E" }}
                     >
                       Hapus bookmark
                     </button>

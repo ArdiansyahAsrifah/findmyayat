@@ -19,7 +19,7 @@ export default function StreakBadge({ record = false, firstAyat }: StreakBadgePr
 
   useEffect(() => {
     if (record) {
-      postAndFetch(firstAyat); // ✅ pass props langsung ke fungsi
+      postAndFetch(firstAyat);
     } else {
       fetchOnly();
     }
@@ -63,23 +63,23 @@ export default function StreakBadge({ record = false, firstAyat }: StreakBadgePr
 
   function normalize(raw: any): StreakData {
     return {
-        currentStreak: raw?.days ?? raw?.currentStreak ?? raw?.current_streak ?? raw?.streak ?? 0,
-        longestStreak: raw?.longestStreak ?? raw?.longest_streak ?? raw?.best ?? raw?.days ?? 0,
+      currentStreak: raw?.days ?? raw?.currentStreak ?? raw?.current_streak ?? raw?.streak ?? 0,
+      longestStreak: raw?.longestStreak ?? raw?.longest_streak ?? raw?.best ?? raw?.days ?? 0,
     };
-}
+  }
 
   if (loading || !streak) return null;
 
   return (
     <div
-      className={`rounded-2xl border px-5 py-4 transition-all ${
-        justRecorded
-          ? "bg-amber-50 border-amber-200"
-          : "bg-white border-stone-200"
-      }`}
+      className="rounded-2xl px-5 py-4"
+      style={{
+        background: "#FFFFFF",
+        border: "0.5px solid #E8E2D6",
+      }}
     >
       {justRecorded && (
-        <p className="text-xs font-medium text-amber-600 mb-2 tracking-wide">
+        <p className="text-xs font-medium mb-2" style={{ color: "#1C4F3A" }}>
           ✨ Refleksi hari ini tercatat!
         </p>
       )}
@@ -88,27 +88,27 @@ export default function StreakBadge({ record = false, firstAyat }: StreakBadgePr
         <div className="flex items-center gap-3">
           <span className="text-2xl">🔥</span>
           <div>
-            <p className="text-base font-bold text-stone-800">
+            <p className="text-base font-bold" style={{ color: "#1A1A1A" }}>
               {streak.currentStreak}{" "}
-              <span className="font-normal text-stone-500 text-sm">
-                hari berturut-turut
+              <span className="font-normal text-sm" style={{ color: "#6B6B5E" }}>
+                day streak
               </span>
             </p>
-            <p className="text-xs text-stone-400">
-              Terpanjang: {streak.longestStreak} hari
+            <p className="text-xs" style={{ color: "#6B6B5E" }}>
+              Longest: {streak.longestStreak} day
             </p>
           </div>
         </div>
 
-        <div className="flex gap-1">
+        {/* Dot indicators */}
+        <div className="flex gap-1.5">
           {Array.from({ length: 7 }).map((_, i) => (
             <div
               key={i}
-              className={`w-2.5 h-2.5 rounded-full ${
-                i < Math.min(streak.currentStreak, 7)
-                  ? "bg-amber-400"
-                  : "bg-stone-200"
-              }`}
+              className="w-2.5 h-2.5 rounded-full"
+              style={{
+                background: i < Math.min(streak.currentStreak, 7) ? "#1C4F3A" : "#E8E2D6",
+              }}
             />
           ))}
         </div>
