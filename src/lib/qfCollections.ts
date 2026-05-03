@@ -47,6 +47,7 @@ export async function getQFCollectionItems(
 ) {
   // ✅ endpoint yang benar: /bookmarks bukan /verses
   const url = `${QF_API_BASE}/auth/v1/collections/${collectionId}/bookmarks?first=50`;
+  console.log("[getQFCollectionItems] fetching:", url);
   const res = await fetch(url, {
     headers: userHeaders(accessToken),
     cache: "no-store",
