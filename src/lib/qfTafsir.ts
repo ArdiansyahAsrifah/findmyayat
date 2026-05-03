@@ -1,6 +1,5 @@
 import { QF_API_BASE, getContentToken, qfHeaders } from "@/lib/contentToken";
 
-// Ibn Kathir (English) resource ID = 169
 const IBN_KATHIR_ID = 169;
 
 export async function getTafsirByAyah(
@@ -8,9 +7,9 @@ export async function getTafsirByAyah(
   verseNumber: number
 ) {
   const ayahKey = `${surahNumber}:${verseNumber}`;
-  const url = `${QF_API_BASE}/content/api/v4/tafsirs/${IBN_KATHIR_ID}/by_ayah/${ayahKey}`;
 
-  console.log("[qfTafsir] fetching:", url); // ← cek URL di log
+  // Endpoint by_ayah ada di bawah surah endpoint
+  const url = `${QF_API_BASE}/content/api/v4/tafsirs/${IBN_KATHIR_ID}/by_ayah/${ayahKey}`;
 
   const token = await getContentToken();
   const res = await fetch(url, {
@@ -23,5 +22,12 @@ export async function getTafsirByAyah(
     throw new Error(`Get tafsir failed: ${res.status} ${err}`);
   }
 
-  return res.json();
+  const data = await res.json();
+
+  // Response bisa berupa { tafsir: {...} } atau { tafsirs: [...] }
+  // Normalise ke satu bentuk
+  if (data.tafsir) return data.tafsir;
+  if (data.tafsirs?.length > 0) return data.tafsirs[0];
+
+  throw new Error("No tafsir found");
 }

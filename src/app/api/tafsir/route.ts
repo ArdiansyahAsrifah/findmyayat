@@ -13,8 +13,8 @@ export async function GET(req: NextRequest) {
     );
 
   try {
-    const data = await getTafsirByAyah(Number(surah), Number(verse));
-    return NextResponse.json({ tafsir: data.tafsir });
+    const tafsir = await getTafsirByAyah(Number(surah), Number(verse));
+    return NextResponse.json({ tafsir });
   } catch (err) {
     console.error("[GET /api/tafsir]", err);
     return NextResponse.json(

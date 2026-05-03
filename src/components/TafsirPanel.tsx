@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 interface TafsirData {
   text: string;
   resource_name: string;
-  translated_name?: { name: string };
+  language_name?: string;
 }
 
 interface TafsirPanelProps {
@@ -23,7 +23,6 @@ export default function TafsirPanel({
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    // Reset saat ayat berubah
     setOpen(false);
     setTafsir(null);
     setError(false);
@@ -31,11 +30,9 @@ export default function TafsirPanel({
 
   async function fetchTafsir() {
     if (tafsir) {
-      // sudah di-fetch, toggle saja
       setOpen((prev) => !prev);
       return;
     }
-
     setLoading(true);
     setError(false);
     try {
@@ -55,7 +52,6 @@ export default function TafsirPanel({
 
   return (
     <div className="mt-2 px-1">
-      {/* Toggle button */}
       <button
         onClick={fetchTafsir}
         disabled={loading}
@@ -77,7 +73,6 @@ export default function TafsirPanel({
         </p>
       )}
 
-      {/* Tafsir content */}
       {open && tafsir && (
         <div
           className="mt-3 rounded-xl px-4 py-3 text-sm"
@@ -87,7 +82,7 @@ export default function TafsirPanel({
           }}
         >
           <p className="text-xs font-semibold text-emerald-700 mb-2">
-            📖 {tafsir.translated_name?.name ?? tafsir.resource_name}
+            📖 {tafsir.resource_name}
           </p>
           <div
             className="text-stone-700 leading-relaxed prose prose-sm max-w-none"
