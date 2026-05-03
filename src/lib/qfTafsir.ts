@@ -1,9 +1,5 @@
 import { QF_API_BASE, getContentToken, qfHeaders } from "@/lib/contentToken";
 
-const IBN_KATHIR_ID = 169;
-
-// QF_API_BASE = https://apis-prelive.quran.foundation
-// Content API base = QF_API_BASE + /content/api/v4
 const CONTENT_BASE = `${QF_API_BASE}/content/api/v4`;
 
 export async function getTafsirByAyah(
@@ -13,31 +9,38 @@ export async function getTafsirByAyah(
   const token = await getContentToken();
   const verseKey = `${surahNumber}:${verseNumber}`;
 
-  // Fetch seluruh surah, lalu filter per ayat
-  const url = `${CONTENT_BASE}/tafsirs/${IBN_KATHIR_ID}/by_chapter/${surahNumber}?fields=verse_number,verse_key,resource_name,language_name,text`;
+  // Coba semua variasi path — slug dan numeric ID
+  const attempts = [
+    `${CONTENT_BASE}/tafsirs/en-tafisr-ibn-kathir/by_ayah/${verseKey}`,
+    `${CONTENT_BASE}/tafsirs/169/by_ayah/${verseKey}`,
+    `${CONTENT_BASE}/tafsirs/en-tafisr-ibn-kathir/by_chapter/${surahNumber}`,
+    `${CONTENT_BASE}/tafsirs/169/by_chapter/${surahNumber}`,
+  ];
 
-  console.log("[qfTafsir] fetching:", url);
+  for (const url of attempts) {
+    console.log("[qfTafsir] trying:", url);
+    const res = await fetch(url, {
+      headers: qfHeaders(token),
+      cache: "no-store",
+    });
+    console.log("[qfTafsir] status:", res.status);
 
-  const res = await fetch(url, {
-    headers: qfHeaders(token),
-    cache: "no-store",
-  });
+    if (res.ok) {
+      const data = await res.json();
+      console.log("[qfTafsir] SUCCESS keys:", Object.keys(data));
 
-  console.log("[qfTafsir] status:", res.status);
+      // by_ayah response
+      if (data.tafsir) return data.tafsir;
 
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Get tafsir failed: ${res.status} ${err}`);
+      // by_chapter response — filter verse
+      if (data.tafsirs?.length > 0) {
+        const match = data.tafsirs.find(
+          (t: any) => t.verse_key === verseKey || t.verse_number === verseNumber
+        );
+        if (match) return match;
+      }
+    }
   }
 
-  const data = await res.json();
-  console.log("[qfTafsir] keys:", Object.keys(data));
-
-  const tafsirs: any[] = data.tafsirs ?? [];
-  const match = tafsirs.find(
-    (t) => t.verse_key === verseKey || t.verse_number === verseNumber
-  );
-
-  if (!match) throw new Error(`Tafsir not found for ${verseKey}`);
-  return match;
+  throw new Error(`Tafsir not available for ${verseKey} in prelive`);
 }
