@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 export interface SessionData {
   accessToken?: string;
   refreshToken?: string;
-  idToken?: string;
+  idTokenHint?: string;  // ✅ Ganti idToken → idTokenHint (hanya sub, bukan full JWT)
   user?: {
     sub: string;
     email?: string;
@@ -20,7 +20,7 @@ export const sessionOptions: SessionOptions = {
   password: process.env.SESSION_SECRET!,
   cookieName: "findmyayat_session",
   cookieOptions: {
-    secure: process.env.NODE_ENV === "production", // ✅ true di Vercel, false di localhost
+    secure: process.env.NODE_ENV === "production",
     httpOnly: true,
     sameSite: "lax",
     path: "/",

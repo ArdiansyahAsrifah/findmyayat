@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
   const session = await getSession();
 
   if (!state || state !== session.oauthState) {
-    console.error("[callback] State mismatch — received:", state, "expected:", session.oauthState);
+    console.error("[callback] State mismatch");
     return NextResponse.redirect(`${APP_URL}/?auth_error=csrf`);
   }
 
@@ -36,13 +36,15 @@ export async function GET(req: NextRequest) {
     const userInfo = decodeIdToken(tokens.id_token);
 
     if (!userInfo?.nonce || userInfo.nonce !== session.nonce) {
-      console.error("[callback] Nonce mismatch — received:", userInfo?.nonce, "expected:", session.nonce);
+      console.error("[callback] Nonce mismatch");
       return NextResponse.redirect(`${APP_URL}/?auth_error=nonce`);
     }
 
     session.accessToken = tokens.access_token;
     session.refreshToken = tokens.refresh_token;
-    session.idToken = tokens.id_token;
+    // ✅ Jangan simpan idToken di cookie — terlalu besar
+    // Simpan hanya expiry-nya jika perlu logout
+    session.idTokenHint = userInfo.sub; // ← hanya sub, bukan full JWT
     session.user = {
       sub: userInfo?.sub ?? "",
       email: userInfo?.email,
@@ -58,7 +60,8 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.redirect(`${APP_URL}/`);
   } catch (err) {
-    console.error("[callback] Error:", err);
-    return NextResponse.redirect(`${APP_URL}/?auth_error=token`);
+    const message = err instanceof Error ? err.message : "unknown";
+    console.error("[callback] Error:", message);
+    return NextResponse.redirect(`${APP_URL}/?auth_error=token&detail=${encodeURIComponent(message)}`);
   }
 }
