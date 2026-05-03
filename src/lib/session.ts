@@ -13,14 +13,14 @@ export interface SessionData {
   };
   oauthState?: string;
   codeVerifier?: string;
-  nonce?: string;          // ← TAMBAH INI
+  nonce?: string;
 }
 
 export const sessionOptions: SessionOptions = {
   password: process.env.SESSION_SECRET!,
   cookieName: "findmyayat_session",
   cookieOptions: {
-    secure: false,       // localhost
+    secure: process.env.NODE_ENV === "production", // ✅ true di Vercel, false di localhost
     httpOnly: true,
     sameSite: "lax",
     path: "/",
