@@ -38,7 +38,7 @@ export async function recordQFActivityDay(accessToken: string) {
   // ✅ Tambah field "type" yang required
   const body = {
     date: today,
-    type: "reflection", // required by API
+    type: "QURAN", // required by API
   };
 
   console.log("[recordActivityDay] posting:", body);
