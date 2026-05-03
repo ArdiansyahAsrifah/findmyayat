@@ -7,9 +7,11 @@ export async function getTafsirByAyah(
   verseNumber: number
 ) {
   const ayahKey = `${surahNumber}:${verseNumber}`;
-
-  // Endpoint by_ayah ada di bawah surah endpoint
   const url = `${QF_API_BASE}/content/api/v4/tafsirs/${IBN_KATHIR_ID}/by_ayah/${ayahKey}`;
+
+  console.log("[qfTafsir] URL:", url);
+  console.log("[qfTafsir] QF_API_BASE:", QF_API_BASE);
+  console.log("[qfTafsir] QF_ENV:", process.env.QF_ENV);
 
   const token = await getContentToken();
   const res = await fetch(url, {
@@ -23,9 +25,8 @@ export async function getTafsirByAyah(
   }
 
   const data = await res.json();
+  console.log("[qfTafsir] response keys:", Object.keys(data));
 
-  // Response bisa berupa { tafsir: {...} } atau { tafsirs: [...] }
-  // Normalise ke satu bentuk
   if (data.tafsir) return data.tafsir;
   if (data.tafsirs?.length > 0) return data.tafsirs[0];
 
