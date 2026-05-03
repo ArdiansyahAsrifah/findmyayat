@@ -1,5 +1,3 @@
-// src/app/api/notes/route.ts
-
 import { NextRequest, NextResponse } from "next/server";
 import { getValidAccessToken } from "@/lib/tokenRefresh";
 import {
@@ -25,7 +23,6 @@ export async function GET(req: NextRequest) {
 
     const data = await getQFNotes(accessToken, Number(surah), Number(verse));
     const notes = data.data ?? [];
-
     return NextResponse.json({ notes });
   } catch (err) {
     console.error("[GET /api/notes]", err);
