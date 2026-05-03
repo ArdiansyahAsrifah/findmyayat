@@ -1,6 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getTafsirByAyah } from "@/lib/qfTafsir";
 
+import { QF_API_BASE, getContentToken, qfHeaders } from "@/lib/contentToken";
+
+// Temporary: cek available tafsirs
+export async function POST(req: NextRequest) {
+  const token = await getContentToken();
+  const res = await fetch(`${QF_API_BASE}/content/api/v4/resources/tafsirs`, {
+    headers: qfHeaders(token),
+  });
+  const data = await res.json();
+  return NextResponse.json(data);
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const surah = searchParams.get("surah");
