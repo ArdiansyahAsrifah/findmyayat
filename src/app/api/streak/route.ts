@@ -34,19 +34,21 @@ export async function GET() {
 }
 
 // POST — dipanggil tepat setelah ayat muncul di halaman utama
-export async function POST() {
+export async function POST(req: NextRequest) {
   try {
     const accessToken = await getValidAccessToken();
     if (!accessToken)
-      // User belum login — silent, jangan error supaya UX tidak terganggu
       return NextResponse.json({ error: "Not logged in" }, { status: 401 });
 
-    // Catat activity day — ini yang menaikkan streak
+    // Ambil info ayat dari body request (opsional)
+    const body = await req.json().catch(() => ({}));
+    const surahNumber = body.surahNumber ?? 1;
+    const verseNumber = body.verseNumber ?? 1;
+
     const activityResult = await Promise.allSettled([
-      recordQFActivityDay(accessToken),
+      recordQFActivityDay(accessToken, surahNumber, verseNumber),
     ]);
 
-    // Ambil streak terbaru setelah dicatat
     const streak = await getQFStreak(accessToken);
 
     return NextResponse.json({

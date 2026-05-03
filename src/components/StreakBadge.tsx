@@ -8,7 +8,8 @@ interface StreakData {
 }
 
 interface StreakBadgeProps {
-  record?: boolean; // true = POST, false = GET only
+  record?: boolean; 
+  firstAyat?: { surahNumber: number; verseNumber: number };
 }
 
 export default function StreakBadge({ record = false }: StreakBadgeProps) {
@@ -39,19 +40,26 @@ export default function StreakBadge({ record = false }: StreakBadgeProps) {
 
   async function postAndFetch() {
     try {
-      const res = await fetch("/api/streak", { method: "POST" });
-      if (!res.ok) return;
-      const data = await res.json();
-      if (data.streak) {
-        setStreak(normalize(data.streak));
-        setJustRecorded(true);
-      }
-    } catch {
-      // silent
-    } finally {
-      setLoading(false);
+            const res = await fetch("/api/streak", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                surahNumber: firstAyat?.surahNumber ?? 1,
+                verseNumber: firstAyat?.verseNumber ?? 1,
+            }),
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            if (data.streak) {
+            setStreak(normalize(data.streak));
+            setJustRecorded(true);
+            }
+        } catch {
+            // silent
+        } finally {
+            setLoading(false);
+        }
     }
-  }
 
   function normalize(raw: any): StreakData {
     return {

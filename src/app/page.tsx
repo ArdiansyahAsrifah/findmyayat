@@ -15,6 +15,7 @@ import {
 } from "@/lib/storage";
 import { Ayat } from "@/types";
 
+
 type SearchState = "idle" | "searching" | "done" | "error";
 
 export default function Home() {
@@ -27,6 +28,7 @@ export default function Home() {
   } | null>(null);
   const [bookmarkedIds, setBookmarkedIds] = useState<number[]>([]);
   const [streakKey, setStreakKey] = useState(0);
+  const [firstAyat, setFirstAyat] = useState<{ surahNumber: number; verseNumber: number } | undefined>();
 
   const handleStorySearch = async () => {
     const trimmed = story.trim();
@@ -48,6 +50,13 @@ export default function Home() {
       const bIds = ayats.filter((a) => isBookmarked(a.id)).map((a) => a.id);
       setBookmarkedIds(bIds);
       setStoryResults(ayats);
+      if (ayats.length > 0) {
+        setFirstAyat({
+          surahNumber: ayats[0].surahNumber,
+          verseNumber: ayats[0].verseNumber,
+        });
+      }
+
       setSearchState("done");
 
       // ✅ Trigger POST streak setiap kali search berhasil
@@ -114,7 +123,7 @@ export default function Home() {
 
       {/* ✅ Streak — selalu tampil di homepage kalau user login */}
       <section className="max-w-2xl mx-auto px-4 pb-4">
-        <StreakBadge key={streakKey} record={streakKey > 0} />
+        <StreakBadge key={streakKey} record={streakKey > 0} firstAyat={firstAyat} />
       </section>
 
       {/* Story Search */}

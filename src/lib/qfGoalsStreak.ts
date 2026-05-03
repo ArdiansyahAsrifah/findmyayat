@@ -31,15 +31,19 @@ export async function getQFStreak(accessToken: string) {
 }
 
 // ── ACTIVITY DAY ─────────────────────────────────────────────
-export async function recordQFActivityDay(accessToken: string) {
-  const today = new Date().toISOString().split("T")[0]; // "YYYY-MM-DD"
+export async function recordQFActivityDay(
+  accessToken: string,
+  surahNumber: number = 1,
+  verseNumber: number = 1
+) {
+  const today = new Date().toISOString().split("T")[0];
   const url = `${QF_API_BASE}/auth/v1/activity-days`;
 
-  // ✅ Tambah field "type" yang required
   const body = {
     date: today,
-    type: "QURAN", 
+    type: "QURAN",
     seconds: 60,
+    ranges: [`${surahNumber}:${verseNumber}-${surahNumber}:${verseNumber}`], // ✅ format "surah:verse-surah:verse"
   };
 
   console.log("[recordActivityDay] posting:", body);
