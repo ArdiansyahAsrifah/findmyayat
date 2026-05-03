@@ -40,12 +40,14 @@ export function getAuthorizationUrl(
   url.searchParams.set("redirect_uri", getRedirectUri());
   url.searchParams.set(
     "scope",
-    "openid offline_access bookmark collection post user"
+    "openid offline_access user collection bookmark post.read"
   );
   url.searchParams.set("state", state);
   url.searchParams.set("nonce", nonce);
   url.searchParams.set("code_challenge", codeChallenge);
   url.searchParams.set("code_challenge_method", "S256");
+  // ✅ paksa consent ulang agar scope baru masuk ke token
+  url.searchParams.set("prompt", "consent");
   return url.toString();
 }
 

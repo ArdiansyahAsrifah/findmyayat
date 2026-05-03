@@ -2,6 +2,9 @@ import { QF_API_BASE } from "@/lib/contentToken";
 
 const CLIENT_ID = process.env.QF_CLIENT_ID ?? "";
 
+// Default mushaf: 1 = QCFV2 (standard Quran.com)
+const DEFAULT_MUSHAF = 1;
+
 function userHeaders(accessToken: string) {
   return {
     "x-auth-token": accessToken,
@@ -29,10 +32,12 @@ export async function addQFBookmark(
   verseNumber: number
 ) {
   const url = `${QF_API_BASE}/auth/v1/bookmarks`;
+  // ✅ mushaf wajib di pre-live
   const body = {
     type: "ayah",
     key: surahNumber,
     verseNumber: verseNumber,
+    mushaf: DEFAULT_MUSHAF,
   };
   const res = await fetch(url, {
     method: "POST",
