@@ -40,7 +40,7 @@ export function getAuthorizationUrl(
   url.searchParams.set("redirect_uri", getRedirectUri());
   url.searchParams.set(
     "scope",
-    "openid offline_access bookmark collection post.read user"
+    "openid offline_access bookmark collection post user"
   );
   url.searchParams.set("state", state);
   url.searchParams.set("nonce", nonce);
