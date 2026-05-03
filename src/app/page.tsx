@@ -225,7 +225,6 @@ export default function Home() {
               <AyatCard
                 key={ayat.id}
                 ayat={ayat}
-                isAiMatched
                 isBookmarked={bookmarkedIds.includes(ayat.id)}
               />
             ))}
