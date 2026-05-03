@@ -13,10 +13,9 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // Fetch verse detail + translation
     const [verseRes, chapterRes] = await Promise.all([
       fetch(
-        `https://api.qurancdn.com/api/qdc/verses/by_key/${surah}:${verse}?words=false&translation_fields=text&translations=131&fields=text_uthmani`,
+        `https://api.qurancdn.com/api/qdc/verses/by_key/${surah}:${verse}?words=false&translations=85&fields=text_uthmani`,
         { cache: "force-cache" }
       ),
       fetch(
@@ -26,7 +25,10 @@ export async function GET(req: NextRequest) {
     ]);
 
     if (!verseRes.ok || !chapterRes.ok) {
-      return NextResponse.json({ error: "Failed to fetch ayat" }, { status: 500 });
+      return NextResponse.json(
+        { error: "Failed to fetch ayat" },
+        { status: 500 }
+      );
     }
 
     const [verseData, chapterData] = await Promise.all([
@@ -42,9 +44,8 @@ export async function GET(req: NextRequest) {
     }
 
     const translation =
-      v.translations?.[0]?.text?.replace(/<[^>]+>/g, "") ?? "";
+      v.translations?.[0]?.text?.replace(/<[^>]+>/g, "").trim() ?? "";
 
-    // Audio URL format Quran.com (Sheikh Mishari Rashid)
     const surahPadded = String(surah).padStart(3, "0");
     const versePadded = String(verse).padStart(3, "0");
     const audioUrl = `https://verses.quran.com/Alafasy/mp3/${surahPadded}${versePadded}.mp3`;
@@ -64,6 +65,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ayat });
   } catch (err) {
     console.error("[/api/ayat] error:", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

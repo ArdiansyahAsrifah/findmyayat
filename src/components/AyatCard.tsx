@@ -9,6 +9,7 @@ interface Props {
   isBookmarked?: boolean;
   isAiMatched?: boolean;
   isInKit?: boolean;
+  hideActions?: boolean;
 }
 
 export default function AyatCard({
@@ -16,6 +17,7 @@ export default function AyatCard({
   isBookmarked = false,
   isInKit = false,
   isAiMatched = false,
+  hideActions = false,
 }: Props) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [showReflections, setShowReflections] = useState(false);
@@ -148,7 +150,7 @@ export default function AyatCard({
         }}
       />
 
-      {/* Subtle geometric pattern overlay (top-right corner) */}
+      {/* Subtle geometric pattern overlay */}
       <div
         className="absolute top-0 right-0 w-32 h-32 opacity-[0.03] pointer-events-none"
         style={{
@@ -163,7 +165,8 @@ export default function AyatCard({
           className="fixed bottom-6 left-1/2 z-50 flex items-center gap-2.5 px-4 py-3 rounded-2xl text-xs font-semibold shadow-xl"
           style={{
             transform: "translateX(-50%)",
-            animation: "toastSlideUp 0.25s cubic-bezier(0.34,1.56,0.64,1) forwards",
+            animation:
+              "toastSlideUp 0.25s cubic-bezier(0.34,1.56,0.64,1) forwards",
             background: error
               ? "linear-gradient(135deg, #3a1010, #5a1a1a)"
               : "linear-gradient(135deg, #0f2d1a, #1a4a2e)",
@@ -190,10 +193,9 @@ export default function AyatCard({
       )}
 
       <div className="p-5 pb-4">
-        {/* Header row: surah badge + actions */}
+        {/* Header row */}
         <div className="flex items-start justify-between gap-3 mb-5">
           <div className="flex items-center flex-wrap gap-2">
-            {/* Surah badge */}
             <span
               className="inline-flex items-center text-[11px] font-bold px-3 py-1.5 rounded-full tracking-wide"
               style={{
@@ -221,7 +223,7 @@ export default function AyatCard({
 
           {/* Action buttons */}
           <div className="flex items-center gap-1.5 shrink-0">
-            {/* Audio button */}
+            {/* Audio button — selalu tampil */}
             <button
               onClick={toggleAudio}
               className="relative flex items-center justify-center w-8 h-8 rounded-full transition-all duration-200 hover:scale-105 active:scale-95"
@@ -237,66 +239,82 @@ export default function AyatCard({
               title={isPlaying ? "Pause" : "Play"}
             >
               {isPlaying ? (
-                <svg width="10" height="12" viewBox="0 0 10 12" fill="currentColor">
+                <svg
+                  width="10"
+                  height="12"
+                  viewBox="0 0 10 12"
+                  fill="currentColor"
+                >
                   <rect x="0" y="0" width="3.5" height="12" rx="1" />
                   <rect x="6.5" y="0" width="3.5" height="12" rx="1" />
                 </svg>
               ) : (
-                <svg width="10" height="12" viewBox="0 0 10 12" fill="currentColor">
+                <svg
+                  width="10"
+                  height="12"
+                  viewBox="0 0 10 12"
+                  fill="currentColor"
+                >
                   <path d="M1 0.5 L9.5 6 L1 11.5 Z" />
                 </svg>
               )}
             </button>
 
-            {/* Bookmark button */}
-            <button
-              onClick={handleBookmark}
-              disabled={bookmarkLoading}
-              className="flex items-center justify-center w-8 h-8 rounded-full transition-all duration-200 hover:scale-105 active:scale-95"
-              style={{
-                background: bookmarked
-                  ? "linear-gradient(135deg, #8b6f43, #a8843a)"
-                  : "rgba(139, 111, 67, 0.08)",
-                border: bookmarked
-                  ? "1px solid rgba(139,111,67,0.3)"
-                  : "1px solid rgba(139,111,67,0.15)",
-                color: bookmarked ? "#fef3d0" : "#8b6f43",
-              }}
-              title={bookmarked ? "Remove bookmark" : "Bookmark"}
-            >
-              {bookmarkLoading ? (
-                <svg
-                  className="animate-spin"
-                  width="10"
-                  height="10"
-                  viewBox="0 0 10 10"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M5 1 A4 4 0 0 1 9 5" />
-                </svg>
-              ) : (
-                <svg width="10" height="13" viewBox="0 0 10 13" fill="currentColor">
-                  <path d="M1 1 H9 V12 L5 9 L1 12 Z" />
-                </svg>
-              )}
-            </button>
+            {/* Bookmark button — sembunyikan kalau hideActions */}
+            {!hideActions && (
+              <button
+                onClick={handleBookmark}
+                disabled={bookmarkLoading}
+                className="flex items-center justify-center w-8 h-8 rounded-full transition-all duration-200 hover:scale-105 active:scale-95"
+                style={{
+                  background: bookmarked
+                    ? "linear-gradient(135deg, #8b6f43, #a8843a)"
+                    : "rgba(139, 111, 67, 0.08)",
+                  border: bookmarked
+                    ? "1px solid rgba(139,111,67,0.3)"
+                    : "1px solid rgba(139,111,67,0.15)",
+                  color: bookmarked ? "#fef3d0" : "#8b6f43",
+                }}
+                title={bookmarked ? "Remove bookmark" : "Bookmark"}
+              >
+                {bookmarkLoading ? (
+                  <svg
+                    className="animate-spin"
+                    width="10"
+                    height="10"
+                    viewBox="0 0 10 10"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M5 1 A4 4 0 0 1 9 5" />
+                  </svg>
+                ) : (
+                  <svg
+                    width="10"
+                    height="13"
+                    viewBox="0 0 10 13"
+                    fill="currentColor"
+                  >
+                    <path d="M1 1 H9 V12 L5 9 L1 12 Z" />
+                  </svg>
+                )}
+              </button>
+            )}
           </div>
         </div>
 
         {/* Arabic text */}
         <div
           className="mb-4 px-1 py-2"
-          style={{
-            borderRight: "3px solid rgba(139, 111, 67, 0.3)",
-          }}
+          style={{ borderRight: "3px solid rgba(139, 111, 67, 0.3)" }}
         >
           <p
             className="text-right leading-[2.2] text-stone-800"
             dir="rtl"
             style={{
-              fontFamily: "'Scheherazade New', 'KFGQPC Uthmanic Script', serif",
+              fontFamily:
+                "'Scheherazade New', 'KFGQPC Uthmanic Script', serif",
               fontSize: "clamp(18px, 4vw, 24px)",
               lineHeight: "2.2",
               color: "#2a2015",
@@ -322,7 +340,10 @@ export default function AyatCard({
 
         {/* Audio progress bar */}
         {isPlaying && (
-          <div className="mt-3 h-0.5 rounded-full overflow-hidden" style={{ background: "rgba(139,111,67,0.15)" }}>
+          <div
+            className="mt-3 h-0.5 rounded-full overflow-hidden"
+            style={{ background: "rgba(139,111,67,0.15)" }}
+          >
             <div
               className="h-full rounded-full transition-all duration-200"
               style={{
@@ -339,7 +360,8 @@ export default function AyatCard({
         <div
           className="px-5 py-4 border-t"
           style={{
-            background: "linear-gradient(135deg, rgba(100,70,180,0.04), rgba(120,90,200,0.06))",
+            background:
+              "linear-gradient(135deg, rgba(100,70,180,0.04), rgba(120,90,200,0.06))",
             borderColor: "rgba(100,70,180,0.12)",
           }}
         >
@@ -360,44 +382,57 @@ export default function AyatCard({
           className="flex items-center gap-1.5 text-xs font-medium transition-all duration-200 hover:opacity-80"
           style={{ color: "#7060a0" }}
         >
-          <span style={{ fontSize: "10px" }}>{showReflections ? "▲" : "▼"}</span>
+          <span style={{ fontSize: "10px" }}>
+            {showReflections ? "▲" : "▼"}
+          </span>
           {showReflections ? "Hide reflections" : "Community reflections"}
         </button>
 
         <div className="flex-1" />
 
-        <button
-          onClick={handleAddToKit}
-          disabled={kitAdded || kitLoading}
-          className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-60 disabled:hover:scale-100"
-          style={
-            kitAdded
-              ? {
-                  background: "rgba(45,90,61,0.1)",
-                  color: "#2d5a3d",
-                  border: "1px solid rgba(45,90,61,0.2)",
-                }
-              : {
-                  background: "linear-gradient(135deg, #2d5a3d, #3d7a52)",
-                  color: "#d4edda",
-                  border: "1px solid rgba(45,90,61,0.3)",
-                  boxShadow: "0 1px 4px rgba(45,90,61,0.25)",
-                }
-          }
-        >
-          {kitLoading ? (
-            <>
-              <svg className="animate-spin" width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M5 1 A4 4 0 0 1 9 5" />
-              </svg>
-              Adding…
-            </>
-          ) : kitAdded ? (
-            <>✓ In Kit</>
-          ) : (
-            <>+ Add to Kit</>
-          )}
-        </button>
+        {/* Add to Kit button — sembunyikan kalau hideActions */}
+        {!hideActions && (
+          <button
+            onClick={handleAddToKit}
+            disabled={kitAdded || kitLoading}
+            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-60 disabled:hover:scale-100"
+            style={
+              kitAdded
+                ? {
+                    background: "rgba(45,90,61,0.1)",
+                    color: "#2d5a3d",
+                    border: "1px solid rgba(45,90,61,0.2)",
+                  }
+                : {
+                    background: "linear-gradient(135deg, #2d5a3d, #3d7a52)",
+                    color: "#d4edda",
+                    border: "1px solid rgba(45,90,61,0.3)",
+                    boxShadow: "0 1px 4px rgba(45,90,61,0.25)",
+                  }
+            }
+          >
+            {kitLoading ? (
+              <>
+                <svg
+                  className="animate-spin"
+                  width="10"
+                  height="10"
+                  viewBox="0 0 10 10"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M5 1 A4 4 0 0 1 9 5" />
+                </svg>
+                Adding…
+              </>
+            ) : kitAdded ? (
+              <>✓ In Kit</>
+            ) : (
+              <>+ Add to Kit</>
+            )}
+          </button>
+        )}
       </div>
     </div>
   );
