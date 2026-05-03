@@ -8,8 +8,9 @@ export async function getTafsirByAyah(
 ) {
   const token = await getContentToken();
 
-  // Endpoint by surah — filter verse_number di client
-  const url = `${QF_API_BASE}/content/api/v4/tafsirs/${IBN_KATHIR_ID}/by_chapter/${surahNumber}?fields=verse_number,verse_key,resource_name,language_name`;
+  // Coba path /by_ayah dengan verse_key sebagai path param
+  const verseKey = `${surahNumber}:${verseNumber}`;
+  const url = `${QF_API_BASE}/content/api/v4/tafsirs/${IBN_KATHIR_ID}?verse_key=${verseKey}&fields=verse_number,verse_key,resource_name,language_name`;
 
   console.log("[qfTafsir] fetching:", url);
 
@@ -18,20 +19,21 @@ export async function getTafsirByAyah(
     cache: "no-store",
   });
 
+  console.log("[qfTafsir] status:", res.status);
+
   if (!res.ok) {
     const err = await res.text();
     throw new Error(`Get tafsir failed: ${res.status} ${err}`);
   }
 
   const data = await res.json();
-  const tafsirs: any[] = data.tafsirs ?? [];
+  console.log("[qfTafsir] response keys:", Object.keys(data));
 
-  // Filter untuk verse yang diminta
+  const tafsirs: any[] = data.tafsirs ?? [];
   const match = tafsirs.find(
-    (t) => t.verse_number === verseNumber || t.verse_key === `${surahNumber}:${verseNumber}`
+    (t) => t.verse_key === verseKey || t.verse_number === verseNumber
   );
 
-  if (!match) throw new Error(`Tafsir not found for ${surahNumber}:${verseNumber}`);
-
+  if (!match) throw new Error(`Tafsir not found for ${verseKey}`);
   return match;
 }
