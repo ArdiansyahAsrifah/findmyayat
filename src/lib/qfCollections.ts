@@ -11,8 +11,8 @@ function userHeaders(accessToken: string) {
 }
 
 export async function getQFCollections(accessToken: string) {
-  // ✅ URL benar + pagination wajib
-  const res = await fetch(`${QF_API_BASE}/v1/collections?first=20`, {
+  const url = `${QF_API_BASE}/auth/v1/collections?first=20`;
+  const res = await fetch(url, {
     headers: userHeaders(accessToken),
     cache: "no-store",
   });
@@ -24,7 +24,8 @@ export async function getQFCollections(accessToken: string) {
 }
 
 export async function createQFCollection(accessToken: string, name: string) {
-  const res = await fetch(`${QF_API_BASE}/v1/collections`, {
+  const url = `${QF_API_BASE}/auth/v1/collections`;
+  const res = await fetch(url, {
     method: "POST",
     headers: userHeaders(accessToken),
     body: JSON.stringify({ name }),
@@ -40,14 +41,11 @@ export async function getQFCollectionItems(
   accessToken: string,
   collectionId: string
 ) {
-  // ✅ URL benar + pagination
-  const res = await fetch(
-    `${QF_API_BASE}/v1/collections/${collectionId}/bookmarks?first=50`,
-    {
-      headers: userHeaders(accessToken),
-      cache: "no-store",
-    }
-  );
+  const url = `${QF_API_BASE}/auth/v1/collections/${collectionId}/bookmarks?first=50`;
+  const res = await fetch(url, {
+    headers: userHeaders(accessToken),
+    cache: "no-store",
+  });
   if (!res.ok) {
     const err = await res.text();
     throw new Error(`Get collection items failed: ${res.status} ${err}`);
@@ -61,19 +59,17 @@ export async function addQFCollectionItem(
   surahNumber: number,
   verseNumber: number
 ) {
-  const res = await fetch(
-    `${QF_API_BASE}/v1/collections/${collectionId}/bookmarks`,
-    {
-      method: "POST",
-      headers: userHeaders(accessToken),
-      // ✅ Format body yang benar
-      body: JSON.stringify({
-        type: "ayah",
-        key: surahNumber,
-        verseNumber: verseNumber,
-      }),
-    }
-  );
+  const url = `${QF_API_BASE}/auth/v1/collections/${collectionId}/bookmarks`;
+  const body = {
+    type: "ayah",
+    key: surahNumber,
+    verseNumber: verseNumber,
+  };
+  const res = await fetch(url, {
+    method: "POST",
+    headers: userHeaders(accessToken),
+    body: JSON.stringify(body),
+  });
   if (!res.ok) {
     const err = await res.text();
     throw new Error(`Add collection item failed: ${res.status} ${err}`);
@@ -86,13 +82,11 @@ export async function deleteQFCollectionItem(
   collectionId: string,
   bookmarkId: string
 ) {
-  const res = await fetch(
-    `${QF_API_BASE}/v1/collections/${collectionId}/bookmarks/${bookmarkId}`,
-    {
-      method: "DELETE",
-      headers: userHeaders(accessToken),
-    }
-  );
+  const url = `${QF_API_BASE}/auth/v1/collections/${collectionId}/bookmarks/${bookmarkId}`;
+  const res = await fetch(url, {
+    method: "DELETE",
+    headers: userHeaders(accessToken),
+  });
   if (!res.ok) {
     const err = await res.text();
     throw new Error(`Delete collection item failed: ${res.status} ${err}`);
@@ -103,9 +97,11 @@ export async function getOrCreateMyKitCollection(
   accessToken: string
 ): Promise<string> {
   const data = await getQFCollections(accessToken);
+  // docs mengembalikan { success, data: [...], pagination }
   const collections: Array<{ id: string; name: string }> = data.data ?? [];
   const existing = collections.find((c) => c.name === "My Kit");
   if (existing) return existing.id;
+
   const created = await createQFCollection(accessToken, "My Kit");
   return created.data?.id ?? created.id;
 }
