@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import { Ayat } from "@/types";
 import ReflectionsPanel from "@/components/ReflectionsPanel";
+import TafsirPanel from "@/components/TafsirPanel";
+import NotePanel from "@/components/NotePanel";
 
 interface Props {
   ayat: Ayat;
@@ -21,6 +23,8 @@ export default function AyatCard({
 }: Props) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [showReflections, setShowReflections] = useState(false);
+  const [showTafsir, setShowTafsir] = useState(false);
+  const [showNotes, setShowNotes] = useState(false);
   const [bookmarked, setBookmarked] = useState(isBookmarked);
   const [kitAdded, setKitAdded] = useState(isInKit);
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
@@ -223,7 +227,6 @@ export default function AyatCard({
 
           {/* Action buttons */}
           <div className="flex items-center gap-1.5 shrink-0">
-            {/* Audio button — selalu tampil */}
             <button
               onClick={toggleAudio}
               className="relative flex items-center justify-center w-8 h-8 rounded-full transition-all duration-200 hover:scale-105 active:scale-95"
@@ -239,28 +242,17 @@ export default function AyatCard({
               title={isPlaying ? "Pause" : "Play"}
             >
               {isPlaying ? (
-                <svg
-                  width="10"
-                  height="12"
-                  viewBox="0 0 10 12"
-                  fill="currentColor"
-                >
+                <svg width="10" height="12" viewBox="0 0 10 12" fill="currentColor">
                   <rect x="0" y="0" width="3.5" height="12" rx="1" />
                   <rect x="6.5" y="0" width="3.5" height="12" rx="1" />
                 </svg>
               ) : (
-                <svg
-                  width="10"
-                  height="12"
-                  viewBox="0 0 10 12"
-                  fill="currentColor"
-                >
+                <svg width="10" height="12" viewBox="0 0 10 12" fill="currentColor">
                   <path d="M1 0.5 L9.5 6 L1 11.5 Z" />
                 </svg>
               )}
             </button>
 
-            {/* Bookmark button — sembunyikan kalau hideActions */}
             {!hideActions && (
               <button
                 onClick={handleBookmark}
@@ -278,24 +270,11 @@ export default function AyatCard({
                 title={bookmarked ? "Remove bookmark" : "Bookmark"}
               >
                 {bookmarkLoading ? (
-                  <svg
-                    className="animate-spin"
-                    width="10"
-                    height="10"
-                    viewBox="0 0 10 10"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
+                  <svg className="animate-spin" width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M5 1 A4 4 0 0 1 9 5" />
                   </svg>
                 ) : (
-                  <svg
-                    width="10"
-                    height="13"
-                    viewBox="0 0 10 13"
-                    fill="currentColor"
-                  >
+                  <svg width="10" height="13" viewBox="0 0 10 13" fill="currentColor">
                     <path d="M1 1 H9 V12 L5 9 L1 12 Z" />
                   </svg>
                 )}
@@ -313,8 +292,7 @@ export default function AyatCard({
             className="text-right leading-[2.2] text-stone-800"
             dir="rtl"
             style={{
-              fontFamily:
-                "'Scheherazade New', 'KFGQPC Uthmanic Script', serif",
+              fontFamily: "'Scheherazade New', 'KFGQPC Uthmanic Script', serif",
               fontSize: "clamp(18px, 4vw, 24px)",
               lineHeight: "2.2",
               color: "#2a2015",
@@ -355,13 +333,44 @@ export default function AyatCard({
         )}
       </div>
 
+      {/* Tafsir panel */}
+      {showTafsir && (
+        <div
+          className="px-5 py-4 border-t"
+          style={{
+            background: "linear-gradient(135deg, rgba(236,253,245,0.5), rgba(209,250,229,0.4))",
+            borderColor: "rgba(52,211,153,0.15)",
+          }}
+        >
+          <TafsirPanel
+            surahNumber={ayat.surahNumber}
+            verseNumber={ayat.verseNumber}
+          />
+        </div>
+      )}
+
+      {/* Notes panel */}
+      {showNotes && (
+        <div
+          className="px-5 py-4 border-t"
+          style={{
+            background: "linear-gradient(135deg, rgba(254,243,199,0.4), rgba(253,230,138,0.2))",
+            borderColor: "rgba(180,140,60,0.15)",
+          }}
+        >
+          <NotePanel
+            surahNumber={ayat.surahNumber}
+            verseNumber={ayat.verseNumber}
+          />
+        </div>
+      )}
+
       {/* Reflections panel */}
       {showReflections && (
         <div
           className="px-5 py-4 border-t"
           style={{
-            background:
-              "linear-gradient(135deg, rgba(100,70,180,0.04), rgba(120,90,200,0.06))",
+            background: "linear-gradient(135deg, rgba(100,70,180,0.04), rgba(120,90,200,0.06))",
             borderColor: "rgba(100,70,180,0.12)",
           }}
         >
@@ -374,9 +383,10 @@ export default function AyatCard({
 
       {/* Footer */}
       <div
-        className="flex items-center gap-2 px-5 py-3 border-t"
+        className="flex items-center gap-2 px-5 py-3 border-t flex-wrap"
         style={{ borderColor: "rgba(180, 150, 100, 0.15)" }}
       >
+        {/* Reflections toggle */}
         <button
           onClick={() => setShowReflections(!showReflections)}
           className="flex items-center gap-1.5 text-xs font-medium transition-all duration-200 hover:opacity-80"
@@ -388,9 +398,33 @@ export default function AyatCard({
           {showReflections ? "Hide reflections" : "Community reflections"}
         </button>
 
+        {/* Tafsir toggle */}
+        <button
+          onClick={() => setShowTafsir(!showTafsir)}
+          className="flex items-center gap-1.5 text-xs font-medium transition-all duration-200 hover:opacity-80"
+          style={{ color: "#2d7a52" }}
+        >
+          <span style={{ fontSize: "10px" }}>
+            {showTafsir ? "▲" : "▼"}
+          </span>
+          {showTafsir ? "Hide tafsir" : "📖 Tafsir"}
+        </button>
+
+        {/* Notes toggle */}
+        <button
+          onClick={() => setShowNotes(!showNotes)}
+          className="flex items-center gap-1.5 text-xs font-medium transition-all duration-200 hover:opacity-80"
+          style={{ color: "#a07830" }}
+        >
+          <span style={{ fontSize: "10px" }}>
+            {showNotes ? "▲" : "▼"}
+          </span>
+          {showNotes ? "Hide notes" : "📝 Notes"}
+        </button>
+
         <div className="flex-1" />
 
-        {/* Add to Kit button — sembunyikan kalau hideActions */}
+        {/* Add to Kit button */}
         {!hideActions && (
           <button
             onClick={handleAddToKit}
@@ -413,15 +447,7 @@ export default function AyatCard({
           >
             {kitLoading ? (
               <>
-                <svg
-                  className="animate-spin"
-                  width="10"
-                  height="10"
-                  viewBox="0 0 10 10"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
+                <svg className="animate-spin" width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M5 1 A4 4 0 0 1 9 5" />
                 </svg>
                 Adding…
