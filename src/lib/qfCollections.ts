@@ -4,15 +4,14 @@ const CLIENT_ID = process.env.QF_CLIENT_ID ?? "";
 
 function userHeaders(accessToken: string) {
   return {
-    "x-auth-token": accessToken,  // ✅ Sesuai docs
+    "x-auth-token": accessToken,
     "x-client-id": CLIENT_ID,
     "Content-Type": "application/json",
   };
 }
 
-// GET semua collections milik user
 export async function getQFCollections(accessToken: string) {
-  const res = await fetch(`${QF_API_BASE}/v1/collections`, {
+  const res = await fetch(`${QF_API_BASE}/auth/v1/collections`, { // ✅ /auth/v1/
     headers: userHeaders(accessToken),
     cache: "no-store",
   });
@@ -23,9 +22,8 @@ export async function getQFCollections(accessToken: string) {
   return res.json();
 }
 
-// POST buat collection baru
 export async function createQFCollection(accessToken: string, name: string) {
-  const res = await fetch(`${QF_API_BASE}/v1/collections`, {
+  const res = await fetch(`${QF_API_BASE}/auth/v1/collections`, { // ✅ /auth/v1/
     method: "POST",
     headers: userHeaders(accessToken),
     body: JSON.stringify({ name }),
@@ -38,13 +36,9 @@ export async function createQFCollection(accessToken: string, name: string) {
   return res.json();
 }
 
-// GET items dalam collection
-export async function getQFCollectionItems(
-  accessToken: string,
-  collectionId: string
-) {
+export async function getQFCollectionItems(accessToken: string, collectionId: number) {
   const res = await fetch(
-    `${QF_API_BASE}/v1/collections/${collectionId}/bookmarks`,
+    `${QF_API_BASE}/auth/v1/collections/${collectionId}/verses`, // ✅ /auth/v1/
     {
       headers: userHeaders(accessToken),
       cache: "no-store",
@@ -57,23 +51,19 @@ export async function getQFCollectionItems(
   return res.json();
 }
 
-// POST tambah ayat ke collection
 export async function addQFCollectionItem(
   accessToken: string,
-  collectionId: string,
+  collectionId: number,
   surahNumber: number,
   verseNumber: number
 ) {
   const res = await fetch(
-    `${QF_API_BASE}/v1/collections/${collectionId}/bookmarks`,
+    `${QF_API_BASE}/auth/v1/collections/${collectionId}/verses`, // ✅ /auth/v1/
     {
       method: "POST",
       headers: userHeaders(accessToken),
       body: JSON.stringify({
-        key: surahNumber,
-        type: "ayah",
-        verseNumber: verseNumber,
-        mushaf: 1,
+        verse_key: `${surahNumber}:${verseNumber}`,
       }),
       cache: "no-store",
     }
@@ -85,14 +75,13 @@ export async function addQFCollectionItem(
   return res.json();
 }
 
-// DELETE ayat dari collection by bookmark id
 export async function deleteQFCollectionItem(
   accessToken: string,
-  collectionId: string,
-  bookmarkId: string
+  collectionId: number,
+  verseKey: string
 ) {
   const res = await fetch(
-    `${QF_API_BASE}/v1/collections/${collectionId}/bookmarks/${bookmarkId}`,
+    `${QF_API_BASE}/auth/v1/collections/${collectionId}/verses/${verseKey}`, // ✅ /auth/v1/
     {
       method: "DELETE",
       headers: userHeaders(accessToken),
@@ -105,16 +94,11 @@ export async function deleteQFCollectionItem(
   }
 }
 
-// Helper: cari atau buat collection "My Kit"
-export async function getOrCreateMyKitCollection(
-  accessToken: string
-): Promise<string> {
+export async function getOrCreateMyKitCollection(accessToken: string): Promise<number> {
   const data = await getQFCollections(accessToken);
-  const collections = data.data ?? data.collections ?? [];
-  const existing = collections.find(
-    (c: { name: string }) => c.name === "My Kit"
-  );
+  const collections = data.collections ?? data.data ?? [];
+  const existing = collections.find((c: { name: string }) => c.name === "My Kit");
   if (existing) return existing.id;
   const created = await createQFCollection(accessToken, "My Kit");
-  return created.data?.id ?? created.id;
+  return created.id ?? created.collection?.id;
 }

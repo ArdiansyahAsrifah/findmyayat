@@ -4,15 +4,14 @@ const CLIENT_ID = process.env.QF_CLIENT_ID ?? "";
 
 function userHeaders(accessToken: string) {
   return {
-    "x-auth-token": accessToken,   // ✅ Sesuai docs
+    "x-auth-token": accessToken,
     "x-client-id": CLIENT_ID,
     "Content-Type": "application/json",
   };
 }
 
-// GET semua bookmarks user
 export async function getQFBookmarks(accessToken: string) {
-  const res = await fetch(`${QF_API_BASE}/v1/bookmarks`, {
+  const res = await fetch(`${QF_API_BASE}/auth/v1/bookmarks`, { // ✅ /auth/v1/
     headers: userHeaders(accessToken),
     cache: "no-store",
   });
@@ -23,25 +22,18 @@ export async function getQFBookmarks(accessToken: string) {
   return res.json();
 }
 
-// POST tambah bookmark ayah — pakai /v1/collections/__default__/bookmarks
 export async function addQFBookmark(
   accessToken: string,
   surahNumber: number,
   verseNumber: number
 ) {
-  const res = await fetch(
-    `${QF_API_BASE}/v1/collections/__default__/bookmarks`,
-    {
-      method: "POST",
-      headers: userHeaders(accessToken),
-      body: JSON.stringify({
-        key: surahNumber,        // Surah number
-        type: "ayah",
-        verseNumber: verseNumber,
-        mushaf: 1,               // QCFV2 (default Quran.com)
-      }),
-    }
-  );
+  const res = await fetch(`${QF_API_BASE}/auth/v1/bookmarks`, { // ✅ /auth/v1/
+    method: "POST",
+    headers: userHeaders(accessToken),
+    body: JSON.stringify({
+      verse_key: `${surahNumber}:${verseNumber}`,
+    }),
+  });
   if (!res.ok) {
     const err = await res.text();
     throw new Error(`Failed add bookmark: ${res.status} ${err}`);
@@ -49,12 +41,8 @@ export async function addQFBookmark(
   return res.json();
 }
 
-// DELETE bookmark by id
-export async function deleteQFBookmark(
-  accessToken: string,
-  bookmarkId: string
-) {
-  const res = await fetch(`${QF_API_BASE}/v1/bookmarks/${bookmarkId}`, {
+export async function deleteQFBookmark(accessToken: string, bookmarkId: number) {
+  const res = await fetch(`${QF_API_BASE}/auth/v1/bookmarks/${bookmarkId}`, { // ✅ /auth/v1/
     method: "DELETE",
     headers: userHeaders(accessToken),
   });
