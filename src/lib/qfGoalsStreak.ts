@@ -14,7 +14,7 @@ function userHeaders(accessToken: string) {
 
 // ── STREAK ───────────────────────────────────────────────────
 export async function getQFStreak(accessToken: string) {
-  const url = `${QF_API_BASE}/auth/v1/streaks`;
+  const url = `${QF_API_BASE}/auth/v1/streaks?first=1`; // ← tambah ?first=1
   const res = await fetch(url, {
     headers: userHeaders(accessToken),
     cache: "no-store",
