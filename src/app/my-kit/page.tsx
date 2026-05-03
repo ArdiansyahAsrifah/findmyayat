@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import AyatCard from "@/components/AyatCard";
 import Link from "next/link";
 import { Ayat } from "@/types";
+import NotePanel from "@/components/NotePanel";
 
 type Tab = "kit" | "bookmarks";
 
@@ -217,24 +218,32 @@ export default function MyKitPage() {
               </div>
             ) : (
               <div className="flex flex-col gap-6">
-                {kit.map((item) => (
-                  <div key={item.id}>
-                    {item.ayat ? (
-                      <AyatCard ayat={item.ayat} isInKit hideActions />
-                    ) : (
-                      <div className="rounded-2xl px-5 py-4 text-sm text-stone-600">
-                        📖 {getVerseLabel(item)}
-                      </div>
-                    )}
+              {kit.map((item) => (
+                <div key={item.id}>
+                  {item.ayat ? (
+                    <AyatCard ayat={item.ayat} isInKit hideActions />
+                  ) : (
+                    <div className="rounded-2xl px-5 py-4 text-sm text-stone-600">
+                      📖 {getVerseLabel(item)}
+                    </div>
+                  )}
 
-                    <button
-                      onClick={() => handleRemoveFromKit(item.id)}
-                      className="mt-1 text-xs text-stone-300 hover:text-red-400"
-                    >
-                      Hapus dari Kit
-                    </button>
-                  </div>
-                ))}
+                  {/* ✅ Notes panel — hanya untuk ayat yang ada detail-nya */}
+                  {item.ayat && (
+                    <NotePanel
+                      surahNumber={item.ayat.surahNumber}
+                      verseNumber={item.ayat.verseNumber}
+                    />
+                  )}
+
+                  <button
+                    onClick={() => handleRemoveFromKit(item.id)}
+                    className="mt-1 text-xs text-stone-300 hover:text-red-400"
+                  >
+                    Hapus dari Kit
+                  </button>
+                </div>
+              ))}
               </div>
             )}
           </div>
