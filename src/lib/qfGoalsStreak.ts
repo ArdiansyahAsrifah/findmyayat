@@ -43,7 +43,8 @@ export async function recordQFActivityDay(
     date: today,
     type: "QURAN",
     seconds: 60,
-    ranges: [`${surahNumber}:${verseNumber}-${surahNumber}:${verseNumber}`], // ✅ format "surah:verse-surah:verse"
+    ranges: [`${surahNumber}:${verseNumber}-${surahNumber}:${verseNumber}`], 
+    mushafId: 1,
   };
 
   console.log("[recordActivityDay] posting:", body);
