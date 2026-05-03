@@ -8,27 +8,27 @@ interface StreakData {
 }
 
 interface StreakBadgeProps {
-  record?: boolean; 
+  record?: boolean;
   firstAyat?: { surahNumber: number; verseNumber: number };
 }
 
-export default function StreakBadge({ record = false }: StreakBadgeProps) {
+export default function StreakBadge({ record = false, firstAyat }: StreakBadgeProps) {
   const [streak, setStreak] = useState<StreakData | null>(null);
   const [justRecorded, setJustRecorded] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (record) {
-      postAndFetch();
+      postAndFetch(firstAyat); // ✅ pass props langsung ke fungsi
     } else {
       fetchOnly();
     }
-  }, [record]);
+  }, [record, firstAyat]);
 
   async function fetchOnly() {
     try {
       const res = await fetch("/api/streak");
-      if (!res.ok) return; // user belum login → silent
+      if (!res.ok) return;
       const data = await res.json();
       if (data.streak) setStreak(normalize(data.streak));
     } catch {
@@ -38,39 +38,36 @@ export default function StreakBadge({ record = false }: StreakBadgeProps) {
     }
   }
 
-  async function postAndFetch() {
+  async function postAndFetch(ayat?: { surahNumber: number; verseNumber: number }) {
     try {
-            const res = await fetch("/api/streak", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                surahNumber: firstAyat?.surahNumber ?? 1,
-                verseNumber: firstAyat?.verseNumber ?? 1,
-            }),
-            });
-            if (!res.ok) return;
-            const data = await res.json();
-            if (data.streak) {
-            setStreak(normalize(data.streak));
-            setJustRecorded(true);
-            }
-        } catch {
-            // silent
-        } finally {
-            setLoading(false);
-        }
+      const res = await fetch("/api/streak", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          surahNumber: ayat?.surahNumber ?? 1,
+          verseNumber: ayat?.verseNumber ?? 1,
+        }),
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.streak) {
+        setStreak(normalize(data.streak));
+        setJustRecorded(true);
+      }
+    } catch {
+      // silent
+    } finally {
+      setLoading(false);
     }
+  }
 
   function normalize(raw: any): StreakData {
     return {
-      currentStreak:
-        raw.currentStreak ?? raw.current_streak ?? raw.streak ?? 0,
-      longestStreak:
-        raw.longestStreak ?? raw.longest_streak ?? raw.best ?? 0,
+      currentStreak: raw?.currentStreak ?? raw?.current_streak ?? raw?.streak ?? 0,
+      longestStreak: raw?.longestStreak ?? raw?.longest_streak ?? raw?.best ?? 0,
     };
   }
 
-  // User belum login atau data belum ada → tidak render apapun
   if (loading || !streak) return null;
 
   return (
@@ -103,7 +100,6 @@ export default function StreakBadge({ record = false }: StreakBadgeProps) {
           </div>
         </div>
 
-        {/* 7-dot streak indicator */}
         <div className="flex gap-1">
           {Array.from({ length: 7 }).map((_, i) => (
             <div
