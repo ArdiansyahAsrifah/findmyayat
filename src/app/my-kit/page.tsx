@@ -8,7 +8,6 @@ import { Ayat } from "@/types";
 
 type Tab = "kit" | "bookmarks";
 
-// ✅ Sesuai response dari QF API pre-live
 interface CollectionItem {
   id: string;
   key: number;
@@ -29,6 +28,23 @@ interface BookmarkItem {
   isInDefaultCollection: boolean;
   isReading: boolean | null;
   ayat?: Ayat;
+}
+
+// ✅ Fetch detail ayat dari Quran.com API
+async function fetchAyatDetail(
+  surahNumber: number,
+  verseNumber: number
+): Promise<Ayat | null> {
+  try {
+    const res = await fetch(
+      `/api/ayat?surah=${surahNumber}&verse=${verseNumber}`
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.ayat ?? data ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export default function MyKitPage() {
@@ -55,8 +71,19 @@ export default function MyKitPage() {
       }
       if (!res.ok) throw new Error("Failed to fetch kit");
       const data = await res.json();
-      // ✅ route mengembalikan { items: bookmarks[] }
-      setKit(data.items ?? []);
+      const items: CollectionItem[] = data.items ?? [];
+
+      // ✅ Fetch detail ayat untuk setiap item
+      const itemsWithAyat = await Promise.all(
+        items
+          .filter((item) => item.type === "ayah" && item.verseNumber != null)
+          .map(async (item) => {
+            const ayat = await fetchAyatDetail(item.key, item.verseNumber!);
+            return { ...item, ayat: ayat ?? undefined };
+          })
+      );
+
+      setKit(itemsWithAyat);
     } catch {
       setError("Failed to load kit");
     } finally {
@@ -75,8 +102,19 @@ export default function MyKitPage() {
       }
       if (!res.ok) throw new Error("Failed to fetch bookmarks");
       const data = await res.json();
-      // ✅ QF API mengembalikan { success, data: [...] }
-      setBookmarks(data.data ?? data.bookmarks ?? []);
+      const items: BookmarkItem[] = data.data ?? data.bookmarks ?? [];
+
+      // ✅ Fetch detail ayat untuk setiap bookmark
+      const itemsWithAyat = await Promise.all(
+        items
+          .filter((item) => item.type === "ayah" && item.verseNumber != null)
+          .map(async (item) => {
+            const ayat = await fetchAyatDetail(item.key, item.verseNumber!);
+            return { ...item, ayat: ayat ?? undefined };
+          })
+      );
+
+      setBookmarks(itemsWithAyat);
     } catch {
       setError("Failed to load bookmarks");
     } finally {
@@ -84,7 +122,6 @@ export default function MyKitPage() {
     }
   }
 
-  // ✅ pakai bookmarkId (string) bukan verseKey
   async function handleRemoveFromKit(bookmarkId: string) {
     try {
       await fetch("/api/collections", {
@@ -98,7 +135,6 @@ export default function MyKitPage() {
     }
   }
 
-  // ✅ bookmarkId sekarang string
   async function handleRemoveBookmark(bookmarkId: string) {
     try {
       await fetch("/api/bookmarks", {
@@ -112,11 +148,9 @@ export default function MyKitPage() {
     }
   }
 
-  // ✅ helper: bentuk verse_key dari key + verseNumber
   function getVerseLabel(item: CollectionItem | BookmarkItem): string {
-    if (item.type === "ayah" && item.verseNumber != null) {
+    if (item.type === "ayah" && item.verseNumber != null)
       return `Surah ${item.key}, Ayat ${item.verseNumber}`;
-    }
     if (item.type === "surah") return `Surah ${item.key}`;
     if (item.type === "juz") return `Juz ${item.key}`;
     if (item.type === "page") return `Page ${item.key}`;
@@ -170,10 +204,10 @@ export default function MyKitPage() {
           <div>
             {loadingKit ? (
               <div className="space-y-4">
-                {[1, 2].map((i) => (
+                {[1, 2, 3].map((i) => (
                   <div
                     key={i}
-                    className="animate-pulse h-40 rounded-2xl bg-stone-100"
+                    className="animate-pulse h-48 rounded-2xl bg-stone-100"
                   />
                 ))}
               </div>
@@ -193,13 +227,13 @@ export default function MyKitPage() {
                 {kit.map((item) => (
                   <div key={item.id}>
                     {item.ayat ? (
-                      <AyatCard ayat={item.ayat} />
+                      <AyatCard ayat={item.ayat} isInKit />
                     ) : (
+                      // Fallback kalau ayat detail gagal di-fetch
                       <div
                         className="rounded-2xl px-5 py-4 text-sm text-stone-600"
                         style={{
-                          background:
-                            "linear-gradient(135deg, #faf9f7, #f5f2ec)",
+                          background: "linear-gradient(135deg, #faf9f7, #f5f2ec)",
                           border: "1px solid rgba(180,160,120,0.2)",
                         }}
                       >
@@ -224,10 +258,10 @@ export default function MyKitPage() {
           <div>
             {loadingBookmarks ? (
               <div className="space-y-4">
-                {[1, 2].map((i) => (
+                {[1, 2, 3].map((i) => (
                   <div
                     key={i}
-                    className="animate-pulse h-40 rounded-2xl bg-stone-100"
+                    className="animate-pulse h-48 rounded-2xl bg-stone-100"
                   />
                 ))}
               </div>
@@ -252,8 +286,7 @@ export default function MyKitPage() {
                       <div
                         className="rounded-2xl px-5 py-4 text-sm text-stone-600"
                         style={{
-                          background:
-                            "linear-gradient(135deg, #faf9f7, #f5f2ec)",
+                          background: "linear-gradient(135deg, #faf9f7, #f5f2ec)",
                           border: "1px solid rgba(180,160,120,0.2)",
                         }}
                       >
