@@ -49,6 +49,8 @@ export default function MyKitPage() {
   const [loadingKit, setLoadingKit] = useState(false);
   const [loadingBookmarks, setLoadingBookmarks] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null);
+  const [confirmBookmarkId, setConfirmBookmarkId] = useState<string | null>(null);
 
   useEffect(() => {
     if (activeTab === "kit") fetchKit();
@@ -115,6 +117,8 @@ export default function MyKitPage() {
       setKit((prev) => prev.filter((item) => item.id !== bookmarkId));
     } catch {
       setError("Failed to remove from kit");
+    } finally {
+      setConfirmRemoveId(null);
     }
   }
 
@@ -128,6 +132,8 @@ export default function MyKitPage() {
       setBookmarks((prev) => prev.filter((b) => b.id !== bookmarkId));
     } catch {
       setError("Failed to remove bookmark");
+    } finally {
+      setConfirmBookmarkId(null);
     }
   }
 
@@ -142,14 +148,69 @@ export default function MyKitPage() {
   const Skeleton = () => (
     <div className="flex flex-col gap-4">
       {[1, 2, 3].map((i) => (
-        <div
-          key={i}
-          className="animate-pulse h-48 rounded-2xl"
-          style={{ background: "#E8E2D6" }}
-        />
+        <div key={i} className="animate-pulse h-48 rounded-2xl" style={{ background: "#E8E2D6" }} />
       ))}
     </div>
   );
+
+  /* Reusable remove button row */
+  function RemoveBar({
+    label,
+    confirmId,
+    itemId,
+    onConfirmRequest,
+    onCancel,
+    onConfirm,
+  }: {
+    label: string;
+    confirmId: string | null;
+    itemId: string;
+    onConfirmRequest: () => void;
+    onCancel: () => void;
+    onConfirm: () => void;
+  }) {
+    const isConfirming = confirmId === itemId;
+    return (
+      <div className="flex items-center justify-end gap-2 mt-2 px-1">
+        {isConfirming ? (
+          <>
+            <span className="text-xs mr-auto" style={{ color: "#6B6B5E" }}>
+              Yakin ingin menghapus?
+            </span>
+            <button
+              onClick={onCancel}
+              className="text-xs px-3 py-1.5 rounded-lg transition-opacity hover:opacity-70"
+              style={{ border: "0.5px solid #E8E2D6", color: "#6B6B5E", background: "transparent" }}
+            >
+              Batal
+            </button>
+            <button
+              onClick={onConfirm}
+              className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-opacity hover:opacity-80"
+              style={{ background: "#c0392b", color: "#FFFFFF" }}
+            >
+              Hapus
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={onConfirmRequest}
+            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-opacity hover:opacity-70"
+            style={{
+              border: "0.5px solid rgba(192,57,43,0.25)",
+              color: "#c0392b",
+              background: "rgba(192,57,43,0.04)",
+            }}
+          >
+            <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M1 2.5h9M4 2.5V1.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v1M2 2.5l.5 7a.5.5 0 0 0 .5.5h5a.5.5 0 0 0 .5-.5l.5-7" />
+            </svg>
+            {label}
+          </button>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen" style={{ background: "#F5F0E8" }}>
@@ -178,10 +239,7 @@ export default function MyKitPage() {
         )}
 
         {/* Tabs */}
-        <div
-          className="flex gap-1 mb-6 p-1 rounded-xl"
-          style={{ background: "#E8E2D6" }}
-        >
+        <div className="flex gap-1 mb-6 p-1 rounded-xl" style={{ background: "#E8E2D6" }}>
           {(["kit", "bookmarks"] as Tab[]).map((tab) => (
             <button
               key={tab}
@@ -225,19 +283,22 @@ export default function MyKitPage() {
                         📖 {getVerseLabel(item)}
                       </div>
                     )}
+
                     {item.ayat && (
                       <NotePanel
                         surahNumber={item.ayat.surahNumber}
                         verseNumber={item.ayat.verseNumber}
                       />
                     )}
-                    <button
-                      onClick={() => handleRemoveFromKit(item.id)}
-                      className="mt-1 text-xs transition-opacity hover:opacity-70"
-                      style={{ color: "#6B6B5E" }}
-                    >
-                      Hapus dari Kit
-                    </button>
+
+                    <RemoveBar
+                      label="Hapus dari Kit"
+                      confirmId={confirmRemoveId}
+                      itemId={item.id}
+                      onConfirmRequest={() => setConfirmRemoveId(item.id)}
+                      onCancel={() => setConfirmRemoveId(null)}
+                      onConfirm={() => handleRemoveFromKit(item.id)}
+                    />
                   </div>
                 ))}
               </div>
@@ -272,13 +333,15 @@ export default function MyKitPage() {
                         📖 {getVerseLabel(bookmark)}
                       </div>
                     )}
-                    <button
-                      onClick={() => handleRemoveBookmark(bookmark.id)}
-                      className="mt-1 text-xs transition-opacity hover:opacity-70"
-                      style={{ color: "#6B6B5E" }}
-                    >
-                      Hapus bookmark
-                    </button>
+
+                    <RemoveBar
+                      label="Hapus Bookmark"
+                      confirmId={confirmBookmarkId}
+                      itemId={bookmark.id}
+                      onConfirmRequest={() => setConfirmBookmarkId(bookmark.id)}
+                      onCancel={() => setConfirmBookmarkId(null)}
+                      onConfirm={() => handleRemoveBookmark(bookmark.id)}
+                    />
                   </div>
                 ))}
               </div>

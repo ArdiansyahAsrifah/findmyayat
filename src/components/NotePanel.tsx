@@ -22,6 +22,7 @@ export default function NotePanel({ surahNumber, verseNumber }: NotePanelProps) 
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchNotes();
@@ -59,9 +60,7 @@ export default function NotePanel({ surahNumber, verseNumber }: NotePanelProps) 
       });
       if (!res.ok) return;
       const data = await res.json();
-      if (data.note) {
-        setNotes((prev) => [normalizeNotes([data.note])[0], ...prev]);
-      }
+      if (data.note) setNotes((prev) => [normalizeNotes([data.note])[0], ...prev]);
       setNoteText("");
       setShowForm(false);
     } catch {
@@ -81,6 +80,8 @@ export default function NotePanel({ surahNumber, verseNumber }: NotePanelProps) 
       setNotes((prev) => prev.filter((n) => n.id !== noteId));
     } catch {
       // silent
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -96,9 +97,7 @@ export default function NotePanel({ surahNumber, verseNumber }: NotePanelProps) 
       const data = await res.json();
       setNotes((prev) =>
         prev.map((n) =>
-          n.id === noteId
-            ? { ...n, body: data.note?.body ?? editText.trim() }
-            : n
+          n.id === noteId ? { ...n, body: data.note?.body ?? editText.trim() } : n
         )
       );
       setEditingId(null);
@@ -110,61 +109,108 @@ export default function NotePanel({ surahNumber, verseNumber }: NotePanelProps) 
   if (loading) return null;
 
   return (
-    <div className="mt-2 px-1">
+    <div className="mt-3">
       {/* Notes list */}
       {notes.length > 0 && (
-        <div className="flex flex-col gap-2 mb-2">
+        <div className="flex flex-col gap-2 mb-3">
           {notes.map((note) => (
             <div
               key={note.id}
               className="rounded-xl px-4 py-3 text-sm"
               style={{
-                background: "rgba(254, 243, 199, 0.6)",
-                border: "1px solid rgba(180, 140, 60, 0.2)",
+                background: "#FDFAF5",
+                border: "0.5px solid #E8E2D6",
               }}
             >
               {editingId === note.id ? (
+                /* Edit mode */
                 <div className="flex flex-col gap-2">
                   <textarea
                     value={editText}
                     onChange={(e) => setEditText(e.target.value)}
-                    className="w-full text-sm bg-white rounded-lg px-3 py-2 border border-amber-200 outline-none resize-none text-stone-700"
+                    className="w-full text-sm rounded-lg px-3 py-2 outline-none resize-none"
+                    style={{
+                      background: "#FFFFFF",
+                      border: "0.5px solid #E8E2D6",
+                      color: "#1A1A1A",
+                    }}
                     rows={3}
                     autoFocus
                   />
                   <div className="flex gap-2 justify-end">
                     <button
                       onClick={() => setEditingId(null)}
-                      className="text-xs text-stone-400 hover:text-stone-600"
+                      className="text-xs px-3 py-1.5 rounded-lg transition-opacity hover:opacity-70"
+                      style={{
+                        border: "0.5px solid #E8E2D6",
+                        color: "#6B6B5E",
+                        background: "transparent",
+                      }}
                     >
                       Batal
                     </button>
                     <button
                       onClick={() => handleUpdate(note.id)}
-                      className="text-xs font-semibold text-amber-700 hover:text-amber-900"
+                      className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-opacity hover:opacity-80"
+                      style={{ background: "#1C4F3A", color: "#FFFFFF" }}
                     >
                       Simpan
                     </button>
                   </div>
                 </div>
-              ) : (
-                <div className="flex items-start justify-between gap-2">
-                  <p className="text-stone-700 leading-relaxed flex-1">
-                    📝 {note.body}
+              ) : deletingId === note.id ? (
+                /* Confirm delete */
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs" style={{ color: "#6B6B5E" }}>
+                    Hapus catatan ini?
                   </p>
                   <div className="flex gap-2 shrink-0">
                     <button
-                      onClick={() => {
-                        setEditingId(note.id);
-                        setEditText(note.body);
+                      onClick={() => setDeletingId(null)}
+                      className="text-xs px-3 py-1.5 rounded-lg transition-opacity hover:opacity-70"
+                      style={{
+                        border: "0.5px solid #E8E2D6",
+                        color: "#6B6B5E",
+                        background: "transparent",
                       }}
-                      className="text-xs text-stone-300 hover:text-amber-500"
+                    >
+                      Batal
+                    </button>
+                    <button
+                      onClick={() => handleDelete(note.id)}
+                      className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-opacity hover:opacity-80"
+                      style={{ background: "#c0392b", color: "#FFFFFF" }}
+                    >
+                      Hapus
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* View mode */
+                <div className="flex items-start justify-between gap-3">
+                  <p className="leading-relaxed flex-1" style={{ color: "#1A1A1A" }}>
+                    {note.body}
+                  </p>
+                  <div className="flex gap-1.5 shrink-0">
+                    <button
+                      onClick={() => { setEditingId(note.id); setEditText(note.body); }}
+                      className="text-xs px-2.5 py-1 rounded-lg transition-opacity hover:opacity-70"
+                      style={{
+                        border: "0.5px solid #E8E2D6",
+                        color: "#6B6B5E",
+                        background: "transparent",
+                      }}
                     >
                       Edit
                     </button>
                     <button
-                      onClick={() => handleDelete(note.id)}
-                      className="text-xs text-stone-300 hover:text-red-400"
+                      onClick={() => setDeletingId(note.id)}
+                      className="text-xs px-2.5 py-1 rounded-lg transition-opacity hover:opacity-70"
+                      style={{
+                        border: "0.5px solid rgba(192,57,43,0.3)",
+                        color: "#c0392b",
+                        background: "rgba(192,57,43,0.05)",
+                      }}
                     >
                       Hapus
                     </button>
@@ -176,32 +222,39 @@ export default function NotePanel({ surahNumber, verseNumber }: NotePanelProps) 
         </div>
       )}
 
-      {/* Add note form */}
+      {/* Add note */}
       {showForm ? (
         <div className="flex flex-col gap-2">
           <textarea
             value={noteText}
             onChange={(e) => setNoteText(e.target.value)}
             placeholder="Tulis catatanmu tentang ayat ini..."
-            className="w-full text-sm bg-white rounded-xl px-4 py-3 border border-amber-200 outline-none resize-none text-stone-700 placeholder:text-stone-300"
+            className="w-full text-sm rounded-xl px-4 py-3 outline-none resize-none"
+            style={{
+              background: "#FFFFFF",
+              border: "0.5px solid #E8E2D6",
+              color: "#1A1A1A",
+            }}
             rows={3}
             autoFocus
           />
           <div className="flex gap-2 justify-end">
             <button
               onClick={() => { setShowForm(false); setNoteText(""); }}
-              className="text-xs text-stone-400 hover:text-stone-600"
+              className="text-xs px-3 py-1.5 rounded-lg transition-opacity hover:opacity-70"
+              style={{
+                border: "0.5px solid #E8E2D6",
+                color: "#6B6B5E",
+                background: "transparent",
+              }}
             >
               Batal
             </button>
             <button
               onClick={handleSave}
               disabled={!noteText.trim() || saving}
-              className="text-xs font-semibold px-3 py-1.5 rounded-lg disabled:opacity-40"
-              style={{
-                background: "linear-gradient(135deg, #92400e, #b45309)",
-                color: "#fef3c7",
-              }}
+              className="text-xs font-semibold px-3 py-1.5 rounded-lg disabled:opacity-40 transition-opacity hover:opacity-80"
+              style={{ background: "#1C4F3A", color: "#FFFFFF" }}
             >
               {saving ? "Menyimpan..." : "Simpan Catatan"}
             </button>
@@ -210,10 +263,17 @@ export default function NotePanel({ surahNumber, verseNumber }: NotePanelProps) 
       ) : (
         <button
           onClick={() => setShowForm(true)}
-          className="text-xs text-stone-400 hover:text-amber-600 transition-colors flex items-center gap-1"
+          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-opacity hover:opacity-70"
+          style={{
+            border: "0.5px solid #E8E2D6",
+            color: "#6B6B5E",
+            background: "transparent",
+          }}
         >
-          <span>📝</span>
-          <span>{notes.length > 0 ? "Tambah catatan lagi" : "Tambah catatan"}</span>
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M5.5 1v9M1 5.5h9" />
+          </svg>
+          {notes.length > 0 ? "Tambah catatan" : "Tambah catatan"}
         </button>
       )}
     </div>
