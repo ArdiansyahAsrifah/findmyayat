@@ -118,8 +118,8 @@ export default function Navbar() {
 
         {/* Copyright */}
         <p className="sidebar__copy">
-          © 2025 FindMyAyat<br />
-          Verses for the Heart
+          © 2026 FindMyAyat<br />
+          Muhammad Ardiansyah Asrifah
         </p>
       </div>
     </aside>

@@ -12,6 +12,7 @@ interface Note {
 interface NotePanelProps {
   surahNumber: number;
   verseNumber: number;
+  compact?: boolean;
 }
 
 export default function NotePanel({ surahNumber, verseNumber }: NotePanelProps) {
@@ -109,107 +110,173 @@ export default function NotePanel({ surahNumber, verseNumber }: NotePanelProps) 
   if (loading) return null;
 
   return (
-    <div className="mt-3">
+    <div style={{ marginTop: 12 }}>
       {/* Notes list */}
       {notes.length > 0 && (
-        <div className="flex flex-col gap-2 mb-3">
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
           {notes.map((note) => (
             <div
               key={note.id}
-              className="rounded-xl px-4 py-3 text-sm"
               style={{
-                background: "#FDFAF5",
-                border: "0.5px solid #E8E2D6",
+                background: "var(--white)",
+                border: "1px solid var(--border)",
+                borderRadius: 12,
+                padding: "12px 16px",
+                fontSize: 13,
               }}
             >
               {editingId === note.id ? (
-                /* Edit mode */
-                <div className="flex flex-col gap-2">
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   <textarea
                     value={editText}
                     onChange={(e) => setEditText(e.target.value)}
-                    className="w-full text-sm rounded-lg px-3 py-2 outline-none resize-none"
                     style={{
-                      background: "#FFFFFF",
-                      border: "0.5px solid #E8E2D6",
-                      color: "#1A1A1A",
+                      width: "100%",
+                      background: "var(--bg)",
+                      border: "1px solid var(--border)",
+                      borderRadius: 8,
+                      padding: "10px 12px",
+                      fontSize: 13,
+                      color: "var(--fg)",
+                      outline: "none",
+                      resize: "none",
+                      fontFamily: "var(--font-body)",
+                      lineHeight: 1.6,
                     }}
                     rows={3}
                     autoFocus
                   />
-                  <div className="flex gap-2 justify-end">
+                  <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
                     <button
                       onClick={() => setEditingId(null)}
-                      className="text-xs px-3 py-1.5 rounded-lg transition-opacity hover:opacity-70"
                       style={{
-                        border: "0.5px solid #E8E2D6",
-                        color: "#6B6B5E",
+                        fontSize: 11,
+                        fontWeight: 500,
+                        letterSpacing: "0.06em",
+                        textTransform: "uppercase",
+                        color: "var(--fg-muted)",
                         background: "transparent",
+                        border: "1px solid var(--border)",
+                        borderRadius: 999,
+                        padding: "6px 14px",
+                        cursor: "pointer",
+                        fontFamily: "var(--font-body)",
                       }}
                     >
                       Batal
                     </button>
                     <button
                       onClick={() => handleUpdate(note.id)}
-                      className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-opacity hover:opacity-80"
-                      style={{ background: "#1C4F3A", color: "#FFFFFF" }}
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 500,
+                        letterSpacing: "0.06em",
+                        textTransform: "uppercase",
+                        color: "#fff",
+                        background: "var(--green)",
+                        border: "none",
+                        borderRadius: 999,
+                        padding: "6px 14px",
+                        cursor: "pointer",
+                        fontFamily: "var(--font-body)",
+                      }}
                     >
                       Simpan
                     </button>
                   </div>
                 </div>
               ) : deletingId === note.id ? (
-                /* Confirm delete */
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-xs" style={{ color: "#6B6B5E" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                  <span style={{ fontSize: 12, color: "var(--fg-muted)" }}>
                     Hapus catatan ini?
-                  </p>
-                  <div className="flex gap-2 shrink-0">
+                  </span>
+                  <div style={{ display: "flex", gap: 8 }}>
                     <button
                       onClick={() => setDeletingId(null)}
-                      className="text-xs px-3 py-1.5 rounded-lg transition-opacity hover:opacity-70"
                       style={{
-                        border: "0.5px solid #E8E2D6",
-                        color: "#6B6B5E",
+                        fontSize: 11,
+                        fontWeight: 500,
+                        letterSpacing: "0.06em",
+                        textTransform: "uppercase",
+                        color: "var(--fg-muted)",
                         background: "transparent",
+                        border: "1px solid var(--border)",
+                        borderRadius: 999,
+                        padding: "5px 12px",
+                        cursor: "pointer",
+                        fontFamily: "var(--font-body)",
                       }}
                     >
                       Batal
                     </button>
                     <button
                       onClick={() => handleDelete(note.id)}
-                      className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-opacity hover:opacity-80"
-                      style={{ background: "#c0392b", color: "#FFFFFF" }}
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 500,
+                        letterSpacing: "0.06em",
+                        textTransform: "uppercase",
+                        color: "#fff",
+                        background: "#c0392b",
+                        border: "none",
+                        borderRadius: 999,
+                        padding: "5px 12px",
+                        cursor: "pointer",
+                        fontFamily: "var(--font-body)",
+                      }}
                     >
                       Hapus
                     </button>
                   </div>
                 </div>
               ) : (
-                /* View mode */
-                <div className="flex items-start justify-between gap-3">
-                  <p className="leading-relaxed flex-1" style={{ color: "#1A1A1A" }}>
-                    {note.body}
+                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+                  <p
+                    style={{
+                      flex: 1,
+                      color: "var(--fg-muted)",
+                      fontStyle: "italic",
+                      fontFamily: "var(--font-display)",
+                      fontSize: 13,
+                      lineHeight: 1.7,
+                    }}
+                  >
+                    "{note.body}"
                   </p>
-                  <div className="flex gap-1.5 shrink-0">
+                  <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
                     <button
                       onClick={() => { setEditingId(note.id); setEditText(note.body); }}
-                      className="text-xs px-2.5 py-1 rounded-lg transition-opacity hover:opacity-70"
                       style={{
-                        border: "0.5px solid #E8E2D6",
-                        color: "#6B6B5E",
+                        fontSize: 10,
+                        fontWeight: 500,
+                        letterSpacing: "0.08em",
+                        textTransform: "uppercase",
+                        color: "var(--fg-muted)",
                         background: "transparent",
+                        border: "1px solid var(--border)",
+                        borderRadius: 999,
+                        padding: "4px 10px",
+                        cursor: "pointer",
+                        fontFamily: "var(--font-body)",
+                        transition: "color 0.15s",
                       }}
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => setDeletingId(note.id)}
-                      className="text-xs px-2.5 py-1 rounded-lg transition-opacity hover:opacity-70"
                       style={{
-                        border: "0.5px solid rgba(192,57,43,0.3)",
+                        fontSize: 10,
+                        fontWeight: 500,
+                        letterSpacing: "0.08em",
+                        textTransform: "uppercase",
                         color: "#c0392b",
-                        background: "rgba(192,57,43,0.05)",
+                        background: "transparent",
+                        border: "1px solid rgba(192,57,43,0.25)",
+                        borderRadius: 999,
+                        padding: "4px 10px",
+                        cursor: "pointer",
+                        fontFamily: "var(--font-body)",
                       }}
                     >
                       Hapus
@@ -222,30 +289,46 @@ export default function NotePanel({ surahNumber, verseNumber }: NotePanelProps) 
         </div>
       )}
 
-      {/* Add note */}
+      {/* Add note form */}
       {showForm ? (
-        <div className="flex flex-col gap-2">
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <textarea
             value={noteText}
             onChange={(e) => setNoteText(e.target.value)}
             placeholder="Tulis catatanmu tentang ayat ini..."
-            className="w-full text-sm rounded-xl px-4 py-3 outline-none resize-none"
             style={{
-              background: "#FFFFFF",
-              border: "0.5px solid #E8E2D6",
-              color: "#1A1A1A",
+              width: "100%",
+              background: "var(--white)",
+              border: "1px solid var(--border)",
+              borderRadius: 12,
+              padding: "12px 16px",
+              fontSize: 13,
+              color: "var(--fg)",
+              outline: "none",
+              resize: "none",
+              fontFamily: "var(--font-body)",
+              lineHeight: 1.6,
+              fontWeight: 300,
             }}
             rows={3}
             autoFocus
           />
-          <div className="flex gap-2 justify-end">
+          <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
             <button
               onClick={() => { setShowForm(false); setNoteText(""); }}
-              className="text-xs px-3 py-1.5 rounded-lg transition-opacity hover:opacity-70"
               style={{
-                border: "0.5px solid #E8E2D6",
-                color: "#6B6B5E",
+                fontSize: 11,
+                fontWeight: 500,
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+                color: "var(--fg-muted)",
                 background: "transparent",
+                border: "1px solid var(--border)",
+                borderRadius: 999,
+                padding: "7px 16px",
+                cursor: "pointer",
+                fontFamily: "var(--font-body)",
+                transition: "color 0.15s",
               }}
             >
               Batal
@@ -253,29 +336,91 @@ export default function NotePanel({ surahNumber, verseNumber }: NotePanelProps) 
             <button
               onClick={handleSave}
               disabled={!noteText.trim() || saving}
-              className="text-xs font-semibold px-3 py-1.5 rounded-lg disabled:opacity-40 transition-opacity hover:opacity-80"
-              style={{ background: "#1C4F3A", color: "#FFFFFF" }}
+              style={{
+                fontSize: 11,
+                fontWeight: 500,
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+                color: "#fff",
+                background: "var(--green)",
+                border: "none",
+                borderRadius: 999,
+                padding: "7px 16px",
+                cursor: !noteText.trim() || saving ? "not-allowed" : "pointer",
+                fontFamily: "var(--font-body)",
+                opacity: !noteText.trim() || saving ? 0.4 : 1,
+                transition: "opacity 0.15s",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+              }}
             >
-              {saving ? "Menyimpan..." : "Simpan Catatan"}
+              {saving ? (
+                <>
+                  <svg
+                    width="10"
+                    height="10"
+                    viewBox="0 0 10 10"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    style={{ animation: "spin 0.8s linear infinite" }}
+                  >
+                    <path d="M5 1 A4 4 0 0 1 9 5" />
+                  </svg>
+                  Menyimpan…
+                </>
+              ) : (
+                <>
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                    <path d="M1.5 5l3 3 4-4" />
+                  </svg>
+                  Simpan Catatan
+                </>
+              )}
             </button>
           </div>
         </div>
       ) : (
+        /* Add note trigger button */
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-opacity hover:opacity-70"
           style={{
-            border: "0.5px solid #E8E2D6",
-            color: "#6B6B5E",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            fontSize: 10,
+            fontWeight: 500,
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            color: "var(--fg-muted)",
             background: "transparent",
+            border: "1px solid var(--border)",
+            borderRadius: 999,
+            padding: "7px 14px",
+            cursor: "pointer",
+            fontFamily: "var(--font-body)",
+            transition: "color 0.15s, border-color 0.15s",
+          }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.color = "var(--fg)";
+            (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--fg-muted)";
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.color = "var(--fg-muted)";
+            (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border)";
           }}
         >
-          <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <path d="M5.5 1v9M1 5.5h9" />
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+            <path d="M5 1v8M1 5h8" />
           </svg>
           {notes.length > 0 ? "Tambah catatan" : "Tambah catatan"}
         </button>
       )}
+
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+      `}</style>
     </div>
   );
 }
