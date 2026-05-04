@@ -1,53 +1,68 @@
 "use client";
 
 import { useState } from "react";
-import Navbar from "@/components/Navbar";
 import AyatCard from "@/components/AyatCard";
 import StreakBadge from "@/components/StreakBadge";
 import { getSituationBySlug } from "@/lib/situations";
 import { getAyatsBySituation } from "@/lib/quranapi";
 import { extractSituationSlug } from "@/components/StorySearch";
-import { addBookmark, removeBookmark, isBookmarked, addToKit } from "@/lib/storage";
+import { isBookmarked } from "@/lib/storage";
 import { Ayat } from "@/types";
 
 type SearchState = "idle" | "searching" | "done" | "error";
 
 const MOODS = [
-  { label: "😢 Sad", text: "I feel really sad" },
-  { label: "😰 Anxious", text: "I am feeling anxious" },
-  { label: "🙏 Grateful", text: "I feel grateful today" },
-  { label: "😤 Angry", text: "I feel angry" },
+  { label: "😢 Sad",         text: "I feel really sad and lost" },
+  { label: "😰 Anxious",     text: "I am feeling anxious and overwhelmed" },
+  { label: "🙏 Grateful",    text: "I feel grateful today, alhamdulillah" },
+  { label: "😤 Angry",       text: "I feel angry and frustrated" },
   { label: "💔 Heartbroken", text: "I am heartbroken" },
-  { label: "🌙 Reflective", text: "I feel distant from Allah" },
+  { label: "🌙 Distant",     text: "I feel distant from Allah" },
 ];
 
 export default function Home() {
-  const [story, setStory] = useState("");
-  const [searchState, setSearchState] = useState<SearchState>("idle");
-  const [storyResults, setStoryResults] = useState<Ayat[]>([]);
-  const [matchedSituation, setMatchedSituation] = useState<{ title: string; emoji: string } | null>(null);
-  const [bookmarkedIds, setBookmarkedIds] = useState<number[]>([]);
-  const [streakKey, setStreakKey] = useState(0);
-  const [firstAyat, setFirstAyat] = useState<{ surahNumber: number; verseNumber: number } | undefined>();
+  const [story, setStory]                   = useState("");
+  const [searchState, setSearchState]       = useState<SearchState>("idle");
+  const [storyResults, setStoryResults]     = useState<Ayat[]>([]);
+  const [matchedSituation, setMatchedSituation] = useState<{
+    title: string;
+    emoji: string;
+  } | null>(null);
+  const [bookmarkedIds, setBookmarkedIds]   = useState<number[]>([]);
+  const [streakKey, setStreakKey]           = useState(0);
+  const [firstAyat, setFirstAyat]          = useState<{
+    surahNumber: number;
+    verseNumber: number;
+  } | undefined>();
 
-  const handleStorySearch = async () => {
+  const handleSearch = async () => {
     const trimmed = story.trim();
     if (!trimmed || searchState === "searching") return;
+
     setSearchState("searching");
     setStoryResults([]);
     setMatchedSituation(null);
+
     try {
-      const slug = extractSituationSlug(trimmed);
+      const slug      = extractSituationSlug(trimmed);
       const situation = getSituationBySlug(slug);
       if (!situation) throw new Error("Situation not found");
+
       setMatchedSituation({ title: situation.title, emoji: situation.emoji });
+
       const ayats = await getAyatsBySituation(situation.searchQuery, 15);
-      const bIds = ayats.filter((a) => isBookmarked(a.id)).map((a) => a.id);
+      const bIds  = ayats.filter((a) => isBookmarked(a.id)).map((a) => a.id);
+
       setBookmarkedIds(bIds);
       setStoryResults(ayats);
+
       if (ayats.length > 0) {
-        setFirstAyat({ surahNumber: ayats[0].surahNumber, verseNumber: ayats[0].verseNumber });
+        setFirstAyat({
+          surahNumber: ayats[0].surahNumber,
+          verseNumber: ayats[0].verseNumber,
+        });
       }
+
       setSearchState("done");
       setStreakKey((k) => k + 1);
     } catch (err) {
@@ -57,7 +72,7 @@ export default function Home() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleStorySearch();
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleSearch();
   };
 
   const handleReset = () => {
@@ -68,179 +83,173 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen" style={{ background: "#F5F0E8" }}>
-      <Navbar />
+    <div
+      style={{
+        minHeight: "100vh",
+        padding: "64px 56px 80px",
+        maxWidth: "var(--content-max)",
+      }}
+    >
+      {/* ── Hero ───────────────────────────────────────────────── */}
+      <section style={{ marginBottom: 52 }}>
+        <h1 className="hero__title" style={{ marginBottom: 16 }}>
+          Peace<br />
+          <span className="hero__title-italic">within yourself.</span>
+        </h1>
+        <p className="hero__sub">
+          Pour out your heart's burdens, find guidance in every verse that
+          shades the soul.
+        </p>
+      </section>
 
-      {/* Hero */}
-      <section className="pt-28 pb-8 px-4 text-center">
-        <div className="max-w-2xl mx-auto">
-          <div
-            className="inline-flex items-center gap-2 text-xs font-medium px-4 py-1.5 rounded-full mb-6"
-            style={{
-              background: "rgba(28, 79, 58, 0.08)",
-              color: "#1C4F3A",
-              border: "0.5px solid rgba(28, 79, 58, 0.2)",
-            }}
-          >
-            ✦ Every situation has its verse
-          </div>
+      {/* ── Streak ─────────────────────────────────────────────── */}
+      {(streakKey > 0 || searchState === "idle") && (
+        <section style={{ marginBottom: 28 }}>
+          <StreakBadge
+            key={streakKey}
+            record={streakKey > 0}
+            firstAyat={firstAyat}
+          />
+        </section>
+      )}
 
-          <h1
-            className="font-bold mb-4 leading-tight"
-            style={{ fontSize: "clamp(36px, 6vw, 52px)", color: "#1A1A1A" }}
-          >
-            What are you feeling <br />
-            <span
+      {/* ── Search box ─────────────────────────────────────────── */}
+      <section style={{ marginBottom: 48 }}>
+        <div className="search-box">
+          {/* Textarea */}
+          <textarea
+            className="search-box__textarea"
+            value={story}
+            onChange={(e) => setStory(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={searchState === "searching" || searchState === "done"}
+            placeholder="Tonight, my soul feels…"
+            rows={5}
+          />
+
+          {/* Mood chips — only when idle */}
+          {searchState === "idle" && (
+            <div
               style={{
-                color: "#1C4F3A",
-                fontFamily: "'Amiri', Georgia, serif",
-                fontStyle: "italic",
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 8,
+                padding: "12px 28px 0",
               }}
             >
-              today?
-            </span>
-          </h1>
-
-          <p className="text-base leading-relaxed" style={{ color: "#6B6B5E" }}>
-            Tell your story or pick a mood — let the words of the Qur'an meet you
-            exactly where your heart is.
-          </p>
-        </div>
-      </section>
-
-      {/* Streak */}
-      <section className="max-w-2xl mx-auto px-4 pb-4">
-        <StreakBadge key={streakKey} record={streakKey > 0} firstAyat={firstAyat} />
-      </section>
-
-      {/* Search box */}
-      <section className="max-w-2xl mx-auto px-4 pb-10">
-        <div
-          className="rounded-2xl overflow-hidden"
-          style={{ background: "#FFFFFF", border: "0.5px solid #E8E2D6" }}
-        >
-          <div className="p-5">
-            <textarea
-              value={story}
-              onChange={(e) => setStory(e.target.value)}
-              onKeyDown={handleKeyDown}
-              disabled={searchState === "searching" || searchState === "done"}
-              placeholder="Describe what you're going through... e.g. 'I failed at work today and I feel really lost.'"
-              className="w-full bg-transparent border-none outline-none resize-none text-sm leading-relaxed min-h-[88px] disabled:opacity-60"
-              style={{ color: "#1A1A1A" }}
-            />
-
-            {searchState === "idle" && (
-              <div className="flex flex-wrap items-center gap-2 mt-3">
-                <span className="text-xs" style={{ color: "#6B6B5E" }}>
-                  Or pick a mood:
-                </span>
-                {MOODS.map((mood) => (
-                  <button
-                    key={mood.label}
-                    onClick={() => setStory(mood.text)}
-                    className="text-xs px-3 py-1.5 rounded-full transition-opacity hover:opacity-70"
-                    style={{
-                      border: "0.5px solid #E8E2D6",
-                      color: "#6B6B5E",
-                      background: "transparent",
-                    }}
-                  >
-                    {mood.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Bottom bar */}
-          <div
-            className="flex items-center justify-between px-5 py-3 border-t min-h-[52px]"
-            style={{ borderColor: "#E8E2D6", background: "#FDFAF5" }}
-          >
-            {searchState === "idle" && (
-              <>
-                <span className="text-xs" style={{ color: "#6B6B5E" }}>
-                  ⌘ K + Enter to search
-                </span>
+              {MOODS.map((mood) => (
                 <button
-                  onClick={handleStorySearch}
-                  disabled={!story.trim()}
-                  className="flex items-center gap-2 text-xs font-semibold px-4 py-2 rounded-xl transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
-                  style={{ background: "#1C4F3A", color: "#FFFFFF" }}
+                  key={mood.label}
+                  className="mood-chip"
+                  onClick={() => setStory(mood.text)}
                 >
-                  ✦ Find verses
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                    <path d="M2 6h8M6 2l4 4-4 4" />
-                  </svg>
+                  {mood.label}
                 </button>
-              </>
-            )}
+              ))}
+            </div>
+          )}
 
-            {searchState === "searching" && (
-              <div className="flex items-center gap-2 w-full">
-                <span className="flex gap-1">
-                  {[0, 120, 240].map((delay) => (
-                    <span
-                      key={delay}
-                      className="w-1.5 h-1.5 rounded-full animate-bounce"
-                      style={{ background: "#1C4F3A", animationDelay: `${delay}ms` }}
-                    />
-                  ))}
+          {/* Footer bar */}
+          <div className="search-box__footer">
+            {/* Left label */}
+            <div className="search-box__label">
+              {searchState === "idle" && (
+                <>
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                    <circle cx="6" cy="6" r="5" />
+                    <path d="M6 4v3M6 8.5v.5" />
+                  </svg>
+                  Reflection space
+                </>
+              )}
+
+              {searchState === "searching" && (
+                <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ display: "flex", gap: 4 }}>
+                    {[0, 140, 280].map((d) => (
+                      <span
+                        key={d}
+                        style={{
+                          width: 5,
+                          height: 5,
+                          borderRadius: "50%",
+                          background: "var(--fg-muted)",
+                          display: "inline-block",
+                          animation: "bounce 0.9s infinite",
+                          animationDelay: `${d}ms`,
+                        }}
+                      />
+                    ))}
+                  </span>
+                  Searching for verses…
                 </span>
-                <span className="text-xs" style={{ color: "#6B6B5E" }}>
-                  Searching for verses...
+              )}
+
+              {searchState === "done" && matchedSituation && (
+                <span style={{ color: "var(--fg-muted)" }}>
+                  {matchedSituation.emoji}{" "}
+                  <strong style={{ color: "var(--fg)", fontWeight: 500 }}>
+                    {matchedSituation.title}
+                  </strong>
+                  {" "}· {storyResults.length} verses
                 </span>
-              </div>
+              )}
+
+              {searchState === "error" && (
+                <span style={{ color: "#c0392b", fontSize: 12 }}>
+                  Something went wrong — please try again.
+                </span>
+              )}
+            </div>
+
+            {/* Right CTA */}
+            {searchState === "idle" && (
+              <button
+                className="btn btn--primary"
+                onClick={handleSearch}
+                disabled={!story.trim()}
+              >
+                Listen to FindMyAyat
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                  <path d="M2 7h9M7.5 2.5 12 7l-4.5 4.5" />
+                </svg>
+              </button>
             )}
 
             {(searchState === "done" || searchState === "error") && (
-              <div className="flex items-center justify-between w-full gap-3">
-                {searchState === "done" ? (
-                  <span className="text-xs flex items-center gap-1.5" style={{ color: "#6B6B5E" }}>
-                    {matchedSituation && (
-                      <span
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-medium"
-                        style={{ background: "rgba(28,79,58,0.08)", color: "#1C4F3A" }}
-                      >
-                        {matchedSituation.emoji} {matchedSituation.title}
-                      </span>
-                    )}
-                    · {storyResults.length} verses found
-                  </span>
-                ) : (
-                  <span className="text-xs" style={{ color: "#c0392b" }}>
-                    Something went wrong. Check your connection and try again.
-                  </span>
-                )}
-                <button
-                  onClick={handleReset}
-                  className="text-xs underline underline-offset-2 whitespace-nowrap transition-opacity hover:opacity-70"
-                  style={{ color: "#6B6B5E" }}
-                >
-                  Search again
-                </button>
-              </div>
+              <button
+                className="btn btn--ghost"
+                onClick={handleReset}
+                style={{ fontSize: 13 }}
+              >
+                Search again
+              </button>
             )}
           </div>
         </div>
+      </section>
 
-        {/* Results */}
-        {searchState === "done" && storyResults.length > 0 && (
-          <div className="mt-6 flex flex-col gap-4">
-            <div className="flex items-center gap-3">
-              <span
-                className="text-xs font-semibold uppercase tracking-wider whitespace-nowrap"
-                style={{ color: "#6B6B5E" }}
-              >
-                Verses for your story
-              </span>
-              <div className="flex-1 h-px" style={{ background: "#E8E2D6" }} />
-              <span className="text-xs whitespace-nowrap" style={{ color: "#6B6B5E" }}>
-                {matchedSituation?.emoji} {matchedSituation?.title} · {storyResults.length} verses found
-              </span>
-            </div>
+      {/* ── Results ────────────────────────────────────────────── */}
+      {searchState === "done" && storyResults.length > 0 && (
+        <section>
+          {/* Section divider */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 16,
+              marginBottom: 32,
+            }}
+          >
+            <span className="section-label">Verses for your story</span>
+            <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
+            <span className="section-label">
+              {matchedSituation?.emoji} {matchedSituation?.title}
+            </span>
+          </div>
 
+          {/* Cards */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
             {storyResults.map((ayat) => (
               <AyatCard
                 key={ayat.id}
@@ -249,24 +258,47 @@ export default function Home() {
               />
             ))}
           </div>
-        )}
+        </section>
+      )}
 
-        {searchState === "done" && storyResults.length === 0 && (
-          <div className="mt-4 text-center py-10" style={{ color: "#6B6B5E" }}>
-            <p className="text-3xl mb-2">🔍</p>
-            <p className="text-sm">No verses found. Try describing your feelings differently.</p>
-          </div>
-        )}
-      </section>
+      {searchState === "done" && storyResults.length === 0 && (
+        <div
+          style={{
+            textAlign: "center",
+            padding: "60px 0",
+            color: "var(--fg-muted)",
+          }}
+        >
+          <p style={{ fontSize: 32, marginBottom: 10 }}>🔍</p>
+          <p style={{ fontSize: 14 }}>
+            No verses found. Try describing your feelings differently.
+          </p>
+        </div>
+      )}
 
-      {/* Footer */}
+      {/* ── Footer ─────────────────────────────────────────────── */}
       <footer
-        className="text-center py-8 text-xs border-t"
-        style={{ borderColor: "#E8E2D6", color: "#6B6B5E" }}
+        style={{
+          marginTop: 80,
+          paddingTop: 24,
+          borderTop: "1px solid var(--border)",
+        }}
       >
-        <p className="mb-1 font-medium" style={{ color: "#1A1A1A" }}>FindMyAyat</p>
-        <p style={{ color: "#6B6B5E" }}>Verses for the Heart</p>
+        <p
+          className="sidebar__copy"
+          style={{ textAlign: "center", lineHeight: 2 }}
+        >
+          © 2025 FindMyAyat · Verses for the Heart
+        </p>
       </footer>
+
+      {/* Bounce keyframes */}
+      <style>{`
+        @keyframes bounce {
+          0%, 100% { transform: translateY(0); }
+          50%       { transform: translateY(-4px); }
+        }
+      `}</style>
     </div>
   );
 }

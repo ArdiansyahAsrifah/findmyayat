@@ -12,7 +12,10 @@ interface StreakBadgeProps {
   firstAyat?: { surahNumber: number; verseNumber: number };
 }
 
-export default function StreakBadge({ record = false, firstAyat }: StreakBadgeProps) {
+export default function StreakBadge({
+  record = false,
+  firstAyat,
+}: StreakBadgeProps) {
   const [streak, setStreak] = useState<StreakData | null>(null);
   const [justRecorded, setJustRecorded] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -38,7 +41,9 @@ export default function StreakBadge({ record = false, firstAyat }: StreakBadgePr
     }
   }
 
-  async function postAndFetch(ayat?: { surahNumber: number; verseNumber: number }) {
+  async function postAndFetch(
+    ayat?: { surahNumber: number; verseNumber: number }
+  ) {
     try {
       const res = await fetch("/api/streak", {
         method: "POST",
@@ -63,56 +68,109 @@ export default function StreakBadge({ record = false, firstAyat }: StreakBadgePr
 
   function normalize(raw: any): StreakData {
     return {
-      currentStreak: raw?.days ?? raw?.currentStreak ?? raw?.current_streak ?? raw?.streak ?? 0,
-      longestStreak: raw?.longestStreak ?? raw?.longest_streak ?? raw?.best ?? raw?.days ?? 0,
+      currentStreak:
+        raw?.days ??
+        raw?.currentStreak ??
+        raw?.current_streak ??
+        raw?.streak ??
+        0,
+      longestStreak:
+        raw?.longestStreak ??
+        raw?.longest_streak ??
+        raw?.best ??
+        raw?.days ??
+        0,
     };
   }
 
   if (loading || !streak) return null;
 
+  const activeDots = Math.min(streak.currentStreak, 7);
+
   return (
     <div
-      className="rounded-2xl px-5 py-4"
       style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 14,
         background: "#FFFFFF",
-        border: "0.5px solid #E8E2D6",
+        borderRadius: 999,
+        padding: "10px 20px 10px 16px",
+        boxShadow: "0 2px 16px 0 rgba(30, 28, 24, 0.06)",
       }}
     >
-      {justRecorded && (
-        <p className="text-xs font-medium mb-2" style={{ color: "#1C4F3A" }}>
-          ✨ Refleksi hari ini tercatat!
-        </p>
-      )}
+      {/* Flame icon */}
+      <span
+        style={{
+          fontSize: 18,
+          lineHeight: 1,
+          display: "flex",
+          alignItems: "center",
+        }}
+      >
+        🔥
+      </span>
 
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="text-2xl">🔥</span>
-          <div>
-            <p className="text-base font-bold" style={{ color: "#1A1A1A" }}>
-              {streak.currentStreak}{" "}
-              <span className="font-normal text-sm" style={{ color: "#6B6B5E" }}>
-                day streak
-              </span>
-            </p>
-            <p className="text-xs" style={{ color: "#6B6B5E" }}>
-              Longest: {streak.longestStreak} day
-            </p>
-          </div>
-        </div>
+      {/* Label */}
+      <span
+        style={{
+          fontFamily: "var(--font-body)",
+          fontSize: 12,
+          fontWeight: 300,
+          color: "var(--fg-muted)",
+        }}
+      >
+        {justRecorded ? "Refleksi tercatat" : "Day streak"}
+      </span>
 
-        {/* Dot indicators */}
-        <div className="flex gap-1.5">
-          {Array.from({ length: 7 }).map((_, i) => (
-            <div
-              key={i}
-              className="w-2.5 h-2.5 rounded-full"
-              style={{
-                background: i < Math.min(streak.currentStreak, 7) ? "#1C4F3A" : "#E8E2D6",
-              }}
-            />
-          ))}
-        </div>
+      {/* Count */}
+      <span
+        style={{
+          fontFamily: "var(--font-display)",
+          fontSize: 20,
+          fontWeight: 600,
+          color: "var(--fg)",
+          letterSpacing: "-0.01em",
+          lineHeight: 1,
+        }}
+      >
+        {streak.currentStreak}
+      </span>
+
+      {/* Dot indicators — 7 days */}
+      <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
+        {Array.from({ length: 7 }).map((_, i) => (
+          <div
+            key={i}
+            style={{
+              width: 7,
+              height: 7,
+              borderRadius: "50%",
+              background: i < activeDots ? "var(--green)" : "var(--border)",
+              transition: "background 0.2s",
+            }}
+          />
+        ))}
       </div>
+
+      {/* Longest streak — subtle right label */}
+      {streak.longestStreak > 0 && (
+        <span
+          style={{
+            fontFamily: "var(--font-body)",
+            fontSize: 10,
+            fontWeight: 400,
+            color: "var(--fg-subtle)",
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
+            borderLeft: "0.5px solid var(--border)",
+            paddingLeft: 12,
+            whiteSpace: "nowrap",
+          }}
+        >
+          Best {streak.longestStreak}d
+        </span>
+      )}
     </div>
   );
 }

@@ -1,102 +1,127 @@
 "use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useUser } from "@/app/hooks/useUser";
+
+const NAV_ITEMS = [
+  {
+    label: "Explore",
+    href: "/",
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="1" y="1" width="5.5" height="5.5" rx="1.5" />
+        <rect x="8.5" y="1" width="5.5" height="5.5" rx="1.5" />
+        <rect x="1" y="8.5" width="5.5" height="5.5" rx="1.5" />
+        <rect x="8.5" y="8.5" width="5.5" height="5.5" rx="1.5" />
+      </svg>
+    ),
+  },
+  {
+    label: "My Kit",
+    href: "/my-kit",
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="1" y="3.5" width="13" height="10" rx="2" />
+        <path d="M4.5 3.5V2.5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1" />
+      </svg>
+    ),
+  },
+];
 
 export default function Navbar() {
   const { user, loading } = useUser();
+  const pathname = usePathname();
 
   return (
-    <nav
-      className="fixed top-0 left-0 right-0 z-50"
-      style={{
-        background: "rgba(245, 240, 232, 0.85)",
-        backdropFilter: "blur(12px)",
-        borderBottom: "0.5px solid #E8E2D6",
-      }}
-    >
-      <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
+    <aside className="layout__sidebar">
+      {/* Logo */}
+      <Link href="/" className="sidebar__logo">
+        <div className="sidebar__logo-icon">☽</div>
+        <span className="sidebar__logo-name">FindMyAyat</span>
+      </Link>
 
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5">
-          <div
-            className="w-8 h-8 rounded-full flex items-center justify-center text-sm"
-            style={{ background: "#1C4F3A", color: "#FFFFFF" }}
-          >
-            ☽
-          </div>
-          <div>
-            <p className="text-sm font-bold leading-none" style={{ color: "#1A1A1A" }}>
-              FindMyAyat
-            </p>
-            <p className="text-[10px] tracking-widest uppercase" style={{ color: "#6B6B5E" }}>
-              Verses for the heart
-            </p>
-          </div>
-        </Link>
+      {/* Nav */}
+      <nav className="sidebar__nav">
+        {NAV_ITEMS.map((item) => {
+          const isActive =
+            item.href === "/"
+              ? pathname === "/"
+              : pathname.startsWith(item.href);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`sidebar__nav-item${isActive ? " sidebar__nav-item--active" : ""}`}
+            >
+              {item.icon}
+              {item.label}
+            </Link>
+          );
+        })}
+      </nav>
 
-        {/* Right */}
-        <div className="flex items-center gap-3">
-
-          {/* My Kit */}
-          <Link
-            href="/my-kit"
-            className="flex items-center gap-1.5 text-sm font-medium transition-opacity hover:opacity-70"
-            style={{ color: "#1A1A1A" }}
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <rect x="1" y="3" width="12" height="10" rx="2" />
-              <path d="M4 3V2a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1" />
-            </svg>
-            <span>My Kit</span>
-          </Link>
-
-          {/* Auth */}
-          {!loading && (
-            <>
-              {user ? (
-                <div className="flex items-center gap-3">
-                  {/* Online dot + name */}
-                  <div className="hidden sm:flex items-center gap-1.5">
-                    <span
-                      className="w-1.5 h-1.5 rounded-full"
-                      style={{ background: "#1C4F3A" }}
-                    />
-                    <span className="text-sm" style={{ color: "#1A1A1A" }}>
-                      {user.name ?? user.username ?? user.email}
-                    </span>
-                  </div>
-
-                  {/* Logout */}
-                  <a
-                    href="/api/auth/logout"
-                    className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-opacity hover:opacity-70"
-                    style={{
-                      border: "0.5px solid #E8E2D6",
-                      color: "#6B6B5E",
-                    }}
-                  >
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <path d="M8 6H2M5 3l-3 3 3 3M8 1h2a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H8" />
-                    </svg>
-                    Logout
-                  </a>
-                </div>
-              ) : (
-                <a
-                  href="/api/auth/login"
-                  className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-opacity hover:opacity-80"
+      {/* Footer */}
+      <div className="sidebar__footer">
+        {!loading && (
+          <>
+            {user ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {/* User name */}
+                <div
                   style={{
-                    background: "#1C4F3A",
-                    color: "#FFFFFF",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 7,
+                    fontSize: 11,
+                    color: "var(--fg-muted)",
                   }}
                 >
-                  Login with Quran.com
+                  <span
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: "50%",
+                      background: "var(--green)",
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span
+                    style={{
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {user.name ?? user.username ?? user.email}
+                  </span>
+                </div>
+
+                {/* Logout */}
+                <a href="/api/auth/logout" className="sidebar__login">
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M8 6H2M5 3l-3 3 3 3M8 1h2a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H8" />
+                  </svg>
+                  Logout
                 </a>
-              )}
-            </>
-          )}
-        </div>
+              </div>
+            ) : (
+              <a href="/api/auth/login" className="sidebar__login">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 6h6M7 3l3 3-3 3M4 11H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h2" />
+                </svg>
+                Login
+              </a>
+            )}
+          </>
+        )}
+
+        {/* Copyright */}
+        <p className="sidebar__copy">
+          © 2025 FindMyAyat<br />
+          Verses for the Heart
+        </p>
       </div>
-    </nav>
+    </aside>
   );
 }
