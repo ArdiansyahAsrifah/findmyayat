@@ -424,6 +424,17 @@ body {
   background: var(--green);
 }
 
+
+.layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.layout__main {
+  flex: 1;
+  overflow-y: auto;
+}
+
 /* ─── Mood Chips ─────────────────────────────────────────────── */
 .mood-chip {
   display: inline-flex;
