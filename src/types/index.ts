@@ -18,6 +18,7 @@ export interface Ayat {
   textTranslation: string;
   tafsir?: string;
   audioUrl?: string;
+  reflection?: string;
 }
 
 export interface Collection {
