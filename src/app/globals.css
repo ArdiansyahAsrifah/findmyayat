@@ -431,6 +431,7 @@ body {
 }
 
 .layout__main {
+  margin-left: var(--sidebar-w);
   flex: 1;
   overflow-y: auto;
 }
