@@ -88,6 +88,8 @@ export default function Home() {
         minHeight: "100vh",
         padding: "64px 56px 80px",
         maxWidth: "var(--content-max)",
+        margin: "0 auto",
+        width: "100%",
       }}
     >
       {/* ── Hero ───────────────────────────────────────────────── */}
