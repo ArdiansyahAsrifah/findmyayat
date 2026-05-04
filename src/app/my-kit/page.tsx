@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Navbar from "@/components/Navbar";
 import AyatCard from "@/components/AyatCard";
 import Link from "next/link";
 import { Ayat } from "@/types";
 import NotePanel from "@/components/NotePanel";
 
-type Tab = "kit" | "bookmarks";
+type Tab = "all" | "kit" | "bookmarks";
 
 interface CollectionItem {
   id: string;
@@ -18,6 +17,8 @@ interface CollectionItem {
   isInDefaultCollection: boolean;
   isReading: boolean | null;
   ayat?: Ayat;
+  savedAt?: string;
+  note?: string;
 }
 
 interface BookmarkItem {
@@ -29,6 +30,7 @@ interface BookmarkItem {
   isInDefaultCollection: boolean;
   isReading: boolean | null;
   ayat?: Ayat;
+  savedAt?: string;
 }
 
 async function fetchAyatDetail(surahNumber: number, verseNumber: number): Promise<Ayat | null> {
@@ -42,8 +44,21 @@ async function fetchAyatDetail(surahNumber: number, verseNumber: number): Promis
   }
 }
 
+function formatDate(dateStr?: string) {
+  if (!dateStr) return "";
+  try {
+    return new Date(dateStr).toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  } catch {
+    return "";
+  }
+}
+
 export default function MyKitPage() {
-  const [activeTab, setActiveTab] = useState<Tab>("kit");
+  const [activeTab, setActiveTab] = useState<Tab>("all");
   const [kit, setKit] = useState<CollectionItem[]>([]);
   const [bookmarks, setBookmarks] = useState<BookmarkItem[]>([]);
   const [loadingKit, setLoadingKit] = useState(false);
@@ -53,17 +68,17 @@ export default function MyKitPage() {
   const [confirmBookmarkId, setConfirmBookmarkId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (activeTab === "kit") fetchKit();
-    if (activeTab === "bookmarks") fetchBookmarks();
-  }, [activeTab]);
+    fetchKit();
+    fetchBookmarks();
+  }, []);
 
   async function fetchKit() {
     setLoadingKit(true);
     setError(null);
     try {
       const res = await fetch("/api/collections");
-      if (res.status === 401) { setError("Please login to view your kit"); return; }
-      if (!res.ok) throw new Error("Failed to fetch kit");
+      if (res.status === 401) { setError("Please login to view your collection"); return; }
+      if (!res.ok) throw new Error();
       const data = await res.json();
       const items: CollectionItem[] = data.items ?? [];
       const itemsWithAyat = await Promise.all(
@@ -76,7 +91,7 @@ export default function MyKitPage() {
       );
       setKit(itemsWithAyat);
     } catch {
-      setError("Failed to load kit");
+      setError("Failed to load collection");
     } finally {
       setLoadingKit(false);
     }
@@ -84,11 +99,10 @@ export default function MyKitPage() {
 
   async function fetchBookmarks() {
     setLoadingBookmarks(true);
-    setError(null);
     try {
       const res = await fetch("/api/bookmarks");
-      if (res.status === 401) { setError("Please login to view your bookmarks"); return; }
-      if (!res.ok) throw new Error("Failed to fetch bookmarks");
+      if (res.status === 401) return;
+      if (!res.ok) throw new Error();
       const data = await res.json();
       const items: BookmarkItem[] = data.data ?? data.bookmarks ?? [];
       const itemsWithAyat = await Promise.all(
@@ -101,7 +115,7 @@ export default function MyKitPage() {
       );
       setBookmarks(itemsWithAyat);
     } catch {
-      setError("Failed to load bookmarks");
+      // silent fail
     } finally {
       setLoadingBookmarks(false);
     }
@@ -116,7 +130,7 @@ export default function MyKitPage() {
       });
       setKit((prev) => prev.filter((item) => item.id !== bookmarkId));
     } catch {
-      setError("Failed to remove from kit");
+      setError("Failed to remove from collection");
     } finally {
       setConfirmRemoveId(null);
     }
@@ -137,216 +151,431 @@ export default function MyKitPage() {
     }
   }
 
-  function getVerseLabel(item: CollectionItem | BookmarkItem): string {
-    if (item.type === "ayah" && item.verseNumber != null) return `Surah ${item.key}, Ayat ${item.verseNumber}`;
-    if (item.type === "surah") return `Surah ${item.key}`;
-    if (item.type === "juz") return `Juz ${item.key}`;
-    if (item.type === "page") return `Page ${item.key}`;
-    return `${item.key}`;
-  }
+  const isLoading = loadingKit || loadingBookmarks;
+
+  // Items to display based on tab
+  const displayItems: Array<{
+    id: string;
+    ayat?: Ayat;
+    type: "kit" | "bookmark";
+    savedAt?: string;
+    note?: string;
+    key: number;
+    verseNumber: number | null;
+  }> = [
+    ...(activeTab === "all" || activeTab === "kit"
+      ? kit.map((k) => ({ ...k, type: "kit" as const }))
+      : []),
+    ...(activeTab === "all" || activeTab === "bookmarks"
+      ? bookmarks.map((b) => ({ ...b, type: "bookmark" as const }))
+      : []),
+  ];
 
   const Skeleton = () => (
-    <div className="flex flex-col gap-4">
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))",
+        gap: 20,
+      }}
+    >
       {[1, 2, 3].map((i) => (
-        <div key={i} className="animate-pulse h-48 rounded-2xl" style={{ background: "#E8E2D6" }} />
+        <div
+          key={i}
+          style={{
+            height: 200,
+            borderRadius: 20,
+            background: "var(--border)",
+            animation: "pulse 1.5s ease-in-out infinite",
+            opacity: 0.5,
+          }}
+        />
       ))}
     </div>
   );
 
-  /* Reusable remove button row */
-  function RemoveBar({
-    label,
-    confirmId,
-    itemId,
-    onConfirmRequest,
-    onCancel,
-    onConfirm,
-  }: {
-    label: string;
-    confirmId: string | null;
-    itemId: string;
-    onConfirmRequest: () => void;
-    onCancel: () => void;
-    onConfirm: () => void;
-  }) {
-    const isConfirming = confirmId === itemId;
-    return (
-      <div className="flex items-center justify-end gap-2 mt-2 px-1">
-        {isConfirming ? (
-          <>
-            <span className="text-xs mr-auto" style={{ color: "#6B6B5E" }}>
-              Yakin ingin menghapus?
-            </span>
-            <button
-              onClick={onCancel}
-              className="text-xs px-3 py-1.5 rounded-lg transition-opacity hover:opacity-70"
-              style={{ border: "0.5px solid #E8E2D6", color: "#6B6B5E", background: "transparent" }}
-            >
-              Batal
-            </button>
-            <button
-              onClick={onConfirm}
-              className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-opacity hover:opacity-80"
-              style={{ background: "#c0392b", color: "#FFFFFF" }}
-            >
-              Hapus
-            </button>
-          </>
-        ) : (
-          <button
-            onClick={onConfirmRequest}
-            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-opacity hover:opacity-70"
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        padding: "56px 48px 80px",
+        maxWidth: "var(--content-max)",
+        margin: "0 auto",
+        width: "100%",
+      }}
+    >
+      {/* ── Header ─────────────────────────────────────────────── */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          marginBottom: 48,
+          gap: 24,
+          flexWrap: "wrap",
+        }}
+      >
+        {/* Title */}
+        <div>
+          <h1
             style={{
-              border: "0.5px solid rgba(192,57,43,0.25)",
-              color: "#c0392b",
-              background: "rgba(192,57,43,0.04)",
+              fontFamily: "var(--font-display)",
+              fontSize: "clamp(36px, 5vw, 56px)",
+              fontWeight: 400,
+              color: "var(--fg)",
+              letterSpacing: "-0.02em",
+              lineHeight: 1.1,
+              marginBottom: 8,
             }}
           >
-            <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M1 2.5h9M4 2.5V1.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v1M2 2.5l.5 7a.5.5 0 0 0 .5.5h5a.5.5 0 0 0 .5-.5l.5-7" />
-            </svg>
-            {label}
-          </button>
-        )}
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen" style={{ background: "#F5F0E8" }}>
-      <Navbar />
-
-      <div className="max-w-2xl mx-auto px-4 pt-24 pb-20">
-
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold mb-1" style={{ color: "#1A1A1A" }}>My Kit</h1>
-          <p className="text-sm" style={{ color: "#6B6B5E" }}>Your collection</p>
+            Soul Sanctuary
+          </h1>
+          <p
+            style={{
+              fontSize: 13,
+              color: "var(--fg-muted)",
+              fontWeight: 300,
+            }}
+          >
+            A collection of wisdom you have found.
+          </p>
         </div>
 
-        {/* Error */}
-        {error && (
-          <div
-            className="mb-4 px-4 py-3 rounded-xl text-sm"
-            style={{
-              background: "rgba(192, 57, 43, 0.06)",
-              border: "0.5px solid rgba(192, 57, 43, 0.2)",
-              color: "#c0392b",
-            }}
-          >
-            {error}
-          </div>
-        )}
-
-        {/* Tabs */}
-        <div className="flex gap-1 mb-6 p-1 rounded-xl" style={{ background: "#E8E2D6" }}>
-          {(["kit", "bookmarks"] as Tab[]).map((tab) => (
+        {/* Filter tabs — top right like reference */}
+        <div
+          style={{
+            display: "flex",
+            gap: 4,
+            background: "var(--bg-card)",
+            borderRadius: 999,
+            padding: 4,
+            border: "1px solid var(--border)",
+            alignSelf: "flex-start",
+            marginTop: 8,
+          }}
+        >
+          {(["all", "kit", "bookmarks"] as Tab[]).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className="flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all"
-              style={
-                activeTab === tab
-                  ? { background: "#FFFFFF", color: "#1A1A1A" }
-                  : { background: "transparent", color: "#6B6B5E" }
-              }
+              style={{
+                padding: "8px 18px",
+                borderRadius: 999,
+                border: "none",
+                fontSize: 10,
+                fontWeight: 500,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                cursor: "pointer",
+                transition: "background 0.15s, color 0.15s",
+                background: activeTab === tab ? "var(--green)" : "transparent",
+                color: activeTab === tab ? "#fff" : "var(--fg-muted)",
+              }}
             >
-              {tab === "kit" ? `📦 Kit (${kit.length})` : `🔖 Bookmarks (${bookmarks.length})`}
+              {tab === "all" ? "All" : tab === "kit" ? "Collection" : "Bookmarks"}
             </button>
           ))}
         </div>
+      </div>
 
-        {/* KIT */}
-        {activeTab === "kit" && (
-          <div>
-            {loadingKit ? (
-              <Skeleton />
-            ) : kit.length === 0 ? (
-              <div className="text-center py-20" style={{ color: "#6B6B5E" }}>
-                <p className="text-4xl mb-3">📦</p>
-                <p className="text-sm mb-4">Kit kamu masih kosong</p>
-                <Link href="/" className="text-sm font-medium" style={{ color: "#1C4F3A" }}>
-                  Temukan ayatmu →
-                </Link>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-6">
-                {kit.map((item) => (
-                  <div key={item.id}>
-                    {item.ayat ? (
-                      <AyatCard ayat={item.ayat} isInKit hideActions />
-                    ) : (
-                      <div
-                        className="rounded-2xl px-5 py-4 text-sm"
-                        style={{ color: "#6B6B5E", background: "#FFFFFF", border: "0.5px solid #E8E2D6" }}
-                      >
-                        📖 {getVerseLabel(item)}
-                      </div>
-                    )}
+      {/* ── Error ──────────────────────────────────────────────── */}
+      {error && (
+        <div
+          style={{
+            marginBottom: 24,
+            padding: "12px 20px",
+            borderRadius: 12,
+            background: "rgba(192, 57, 43, 0.06)",
+            border: "0.5px solid rgba(192, 57, 43, 0.2)",
+            color: "#c0392b",
+            fontSize: 13,
+          }}
+        >
+          {error}
+        </div>
+      )}
 
-                    {item.ayat && (
-                      <NotePanel
-                        surahNumber={item.ayat.surahNumber}
-                        verseNumber={item.ayat.verseNumber}
-                      />
-                    )}
+      {/* ── Content ────────────────────────────────────────────── */}
+      {isLoading ? (
+        <Skeleton />
+      ) : displayItems.length === 0 ? (
+        <div
+          style={{
+            textAlign: "center",
+            padding: "80px 0",
+            color: "var(--fg-muted)",
+          }}
+        >
+          <p style={{ fontSize: 40, marginBottom: 12 }}>
+            {activeTab === "bookmarks" ? "🔖" : "✦"}
+          </p>
+          <p style={{ fontSize: 14, marginBottom: 20 }}>
+            {activeTab === "bookmarks"
+              ? "No bookmarks yet"
+              : activeTab === "kit"
+              ? "Your collection is empty"
+              : "Nothing saved yet"}
+          </p>
+          <Link
+            href="/"
+            style={{
+              fontSize: 13,
+              color: "var(--green)",
+              textDecoration: "none",
+              fontWeight: 500,
+            }}
+          >
+            Find your ayat →
+          </Link>
+        </div>
+      ) : (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))",
+            gap: 20,
+            alignItems: "start",
+          }}
+        >
+          {displayItems.map((item) => (
+            <SanctuaryCard
+              key={`${item.type}-${item.id}`}
+              item={item}
+              confirmRemoveId={confirmRemoveId}
+              confirmBookmarkId={confirmBookmarkId}
+              setConfirmRemoveId={setConfirmRemoveId}
+              setConfirmBookmarkId={setConfirmBookmarkId}
+              onRemoveKit={handleRemoveFromKit}
+              onRemoveBookmark={handleRemoveBookmark}
+            />
+          ))}
+        </div>
+      )}
 
-                    <RemoveBar
-                      label="Hapus dari Kit"
-                      confirmId={confirmRemoveId}
-                      itemId={item.id}
-                      onConfirmRequest={() => setConfirmRemoveId(item.id)}
-                      onCancel={() => setConfirmRemoveId(null)}
-                      onConfirm={() => handleRemoveFromKit(item.id)}
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 0.4; }
+          50% { opacity: 0.7; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+/* ── Individual sanctuary card ──────────────────────────────── */
+function SanctuaryCard({
+  item,
+  confirmRemoveId,
+  confirmBookmarkId,
+  setConfirmRemoveId,
+  setConfirmBookmarkId,
+  onRemoveKit,
+  onRemoveBookmark,
+}: {
+  item: {
+    id: string;
+    ayat?: Ayat;
+    type: "kit" | "bookmark";
+    savedAt?: string;
+    note?: string;
+    key: number;
+    verseNumber: number | null;
+  };
+  confirmRemoveId: string | null;
+  confirmBookmarkId: string | null;
+  setConfirmRemoveId: (id: string | null) => void;
+  setConfirmBookmarkId: (id: string | null) => void;
+  onRemoveKit: (id: string) => void;
+  onRemoveBookmark: (id: string) => void;
+}) {
+  const isKit = item.type === "kit";
+  const isConfirming = isKit
+    ? confirmRemoveId === item.id
+    : confirmBookmarkId === item.id;
+
+  const surahRef = item.ayat
+    ? `${item.ayat.surahName.toUpperCase()}:${item.ayat.verseNumber}`
+    : `${item.key}:${item.verseNumber}`;
+
+  return (
+    <div
+      style={{
+        background: "var(--bg-card)",
+        borderRadius: 20,
+        padding: "24px 28px 20px",
+        border: "1px solid var(--border-card)",
+        display: "flex",
+        flexDirection: "column",
+        gap: 0,
+      }}
+    >
+      {/* Top row: surah ref + dot + date */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 16,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span
+            style={{
+              fontSize: 10,
+              fontWeight: 500,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              color: "var(--fg-subtle)",
+            }}
+          >
+            {surahRef}
+          </span>
+          {/* dot indicator: green = kit, red = bookmark */}
+          <span
+            style={{
+              width: 7,
+              height: 7,
+              borderRadius: "50%",
+              background: isKit ? "var(--green)" : "#e74c3c",
+              display: "inline-block",
+            }}
+          />
+        </div>
+        {item.savedAt && (
+          <span
+            style={{
+              fontSize: 10,
+              color: "var(--fg-subtle)",
+              letterSpacing: "0.06em",
+            }}
+          >
+            {new Date(item.savedAt).toLocaleDateString("en-GB", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+            })}
+          </span>
         )}
+      </div>
 
-        {/* BOOKMARKS */}
-        {activeTab === "bookmarks" && (
-          <div>
-            {loadingBookmarks ? (
-              <Skeleton />
-            ) : bookmarks.length === 0 ? (
-              <div className="text-center py-20" style={{ color: "#6B6B5E" }}>
-                <p className="text-4xl mb-3">🔖</p>
-                <p className="text-sm mb-4">Nothing Found</p>
-                <Link href="/" className="text-sm font-medium" style={{ color: "#1C4F3A" }}>
-                  Search your ayat →
-                </Link>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-4">
-                {bookmarks.map((bookmark) => (
-                  <div key={bookmark.id}>
-                    {bookmark.ayat ? (
-                      <AyatCard ayat={bookmark.ayat} isBookmarked hideActions />
-                    ) : (
-                      <div
-                        className="rounded-2xl px-5 py-4 text-sm"
-                        style={{ color: "#6B6B5E", background: "#FFFFFF", border: "0.5px solid #E8E2D6" }}
-                      >
-                        📖 {getVerseLabel(bookmark)}
-                      </div>
-                    )}
+      {/* Translation */}
+      {item.ayat ? (
+        <p
+          style={{
+            fontFamily: "var(--font-display)",
+            fontStyle: "italic",
+            fontSize: "clamp(16px, 2vw, 20px)",
+            fontWeight: 400,
+            color: "var(--fg)",
+            lineHeight: 1.5,
+            marginBottom: 16,
+          }}
+        >
+          "{item.ayat.textTranslation}"
+        </p>
+      ) : (
+        <p
+          style={{
+            fontSize: 14,
+            color: "var(--fg-muted)",
+            marginBottom: 16,
+          }}
+        >
+          📖 {item.key}:{item.verseNumber}
+        </p>
+      )}
 
-                    <RemoveBar
-                      label="Hapus Bookmark"
-                      confirmId={confirmBookmarkId}
-                      itemId={bookmark.id}
-                      onConfirmRequest={() => setConfirmBookmarkId(bookmark.id)}
-                      onCancel={() => setConfirmBookmarkId(null)}
-                      onConfirm={() => handleRemoveBookmark(bookmark.id)}
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
+      {/* Note box — only for kit items that have a note */}
+      {isKit && item.ayat && (
+        <div style={{ marginBottom: 16 }}>
+          <NotePanel
+            surahNumber={item.ayat.surahNumber}
+            verseNumber={item.ayat.verseNumber}
+            
+          />
+        </div>
+      )}
+
+      {/* Bottom row: type label + delete */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          paddingTop: 12,
+          borderTop: "1px solid var(--border)",
+        }}
+      >
+        <span
+          style={{
+            fontSize: 9,
+            fontWeight: 500,
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
+            color: "var(--fg-subtle)",
+          }}
+        >
+          {isKit ? "Collection" : "Bookmark"}
+        </span>
+
+        {isConfirming ? (
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 11, color: "var(--fg-muted)" }}>Remove?</span>
+            <button
+              onClick={() =>
+                isKit ? setConfirmRemoveId(null) : setConfirmBookmarkId(null)
+              }
+              style={{
+                fontSize: 11,
+                color: "var(--fg-muted)",
+                background: "transparent",
+                border: "0.5px solid var(--border)",
+                borderRadius: 6,
+                padding: "3px 10px",
+                cursor: "pointer",
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() =>
+                isKit ? onRemoveKit(item.id) : onRemoveBookmark(item.id)
+              }
+              style={{
+                fontSize: 11,
+                color: "#fff",
+                background: "#c0392b",
+                border: "none",
+                borderRadius: 6,
+                padding: "3px 10px",
+                cursor: "pointer",
+                fontWeight: 500,
+              }}
+            >
+              Delete
+            </button>
           </div>
+        ) : (
+          <button
+            onClick={() =>
+              isKit
+                ? setConfirmRemoveId(item.id)
+                : setConfirmBookmarkId(item.id)
+            }
+            style={{
+              fontSize: 10,
+              fontWeight: 500,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              color: "#e74c3c",
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              padding: 0,
+            }}
+          >
+            Delete
+          </button>
         )}
       </div>
     </div>
